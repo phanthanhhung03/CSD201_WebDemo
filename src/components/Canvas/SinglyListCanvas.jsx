@@ -20,53 +20,82 @@ export default function SinglyListCanvas({ snapshot }) {
       {/* Background Grid */}
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
-      {/* SVG Layer for Pointer Arrows */}
+      {/* SVG Layer for Pointer Arrows & Auxiliary Pointer Variables */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-        {/* Next pointers between consecutive nodes */}
-        {nodes.map((node, i) => {
-          if (i === nodes.length - 1) return null;
-          const from = getNodeCoords(i);
-          const to = getNodeCoords(i + 1);
+        {/* Next pointers between nodes (Handles both forward -> and reversed <- arrows in real time) */}
+        {nodes.map((node) => {
+          if (!node.nextId) return null;
+          const fromIdx = nodes.findIndex((n) => n.id === node.id);
+          const toIdx = nodes.findIndex((n) => n.id === node.nextId);
+          if (fromIdx === -1 || toIdx === -1) return null;
+
+          const from = getNodeCoords(fromIdx);
+          const to = getNodeCoords(toIdx);
+          const isReversed = toIdx < fromIdx; // Mũi tên đang trỏ quay ngược (quay trái <-)
+
           return (
             <SVGArrow
-              key={`next_${node.id}`}
-              startX={from.x + nodeWidth - 5}
+              key={`next_${node.id}_${node.nextId}`}
+              startX={isReversed ? from.x + 5 : from.x + nodeWidth - 5}
               startY={from.y + 28}
-              endX={to.x + 5}
+              endX={isReversed ? to.x + nodeWidth - 5 : to.x + 5}
               endY={to.y + 28}
-              color="#06b6d4"
+              color={isReversed ? '#f43f5e' : '#06b6d4'}
+              label={isReversed ? 'next (reversed)' : 'next'}
+            />
+          );
+        })}
+
+        {/* Arrow to NULL for node with nextId == null */}
+        {nodes.map((node) => {
+          if (node.nextId !== null) return null;
+          const idx = nodes.findIndex((n) => n.id === node.id);
+          if (idx === -1) return null;
+          const coords = getNodeCoords(idx);
+
+          return (
+            <SVGArrow
+              key={`null_next_${node.id}`}
+              startX={coords.x + nodeWidth - 5}
+              startY={startY + 28}
+              endX={coords.x + nodeWidth + 40}
+              endY={startY + 28}
+              color="#64748b"
               label="next"
             />
           );
         })}
 
-        {/* Arrow to NULL for last node */}
-        {nodes.length > 0 && (
-          <SVGArrow
-            startX={getNodeCoords(nodes.length - 1).x + nodeWidth - 5}
-            startY={startY + 28}
-            endX={getNodeCoords(nodes.length - 1).x + nodeWidth + 40}
-            endY={startY + 28}
-            color="#64748b"
-            label="next"
-          />
-        )}
-
-        {/* Pointers: head, tail, current, temp, newNode */}
+        {/* Pointers: head, tail, current, next, prev, temp, newNode */}
         {Object.entries(pointers).map(([ptrName, targetId]) => {
           if (!targetId) return null;
           const idx = nodes.findIndex((n) => n.id === targetId);
           if (idx === -1) return null;
 
           const coords = getNodeCoords(idx);
-          const isTop = ptrName === 'head' || ptrName === 'current' || ptrName === 'newNode';
-          const py = isTop ? coords.y - 45 : coords.y + 105;
+          const isTop = ptrName === 'head' || ptrName === 'current' || ptrName === 'next' || ptrName === 'newNode';
+          
+          const topOffsets = {
+            head: -42,
+            current: -65,
+            next: -88,
+            newNode: -42
+          };
+          const bottomOffsets = {
+            tail: 102,
+            prev: 125,
+            temp: 148
+          };
+
+          const py = isTop ? coords.y + (topOffsets[ptrName] || -42) : coords.y + (bottomOffsets[ptrName] || 102);
           const ey = isTop ? coords.y - 5 : coords.y + 61;
 
           const colorMap = {
             head: '#10b981',
             tail: '#f59e0b',
             current: '#06b6d4',
+            next: '#8b5cf6',
+            prev: '#e11d48',
             temp: '#f43f5e',
             newNode: '#8b5cf6'
           };
@@ -104,11 +133,11 @@ export default function SinglyListCanvas({ snapshot }) {
 
               const statusStyles = {
                 default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
-                new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
-                active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105',
-                found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
+                new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple ring-2 ring-purple-400',
+                active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105 ring-2 ring-amber-400',
+                found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105 ring-2 ring-emerald-400',
                 deleting: 'border-rose-500 bg-rose-950 text-rose-200 glow-rose opacity-60 scale-90',
-                visited: 'border-blue-400 bg-blue-950 text-blue-200'
+                visited: 'border-rose-400 bg-rose-950/80 text-rose-200 ring-2 ring-rose-400'
               };
 
               return (
@@ -118,7 +147,7 @@ export default function SinglyListCanvas({ snapshot }) {
                   initial={{ opacity: 0, y: -20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.5 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                   style={{
                     position: 'absolute',
                     left: `${coords.x}px`,
@@ -154,7 +183,7 @@ export default function SinglyListCanvas({ snapshot }) {
             })
           )}
 
-          {/* NULL Box */}
+          {/* NULL Box for end of list */}
           {nodes.length > 0 && (
             <motion.div
               style={{
