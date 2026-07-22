@@ -5,9 +5,9 @@ import SVGArrow from './SVGArrow';
 export default function DoublyListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
 
-  const nodeWidth = 100;
-  const nodeGap = 60;
-  const startX = 70;
+  const nodeWidth = 125;
+  const nodeGap = 90;
+  const startX = 60;
   const startY = 160;
 
   const getNodeCoords = (index) => ({
@@ -31,18 +31,18 @@ export default function DoublyListCanvas({ snapshot }) {
               {/* Next arrow (Top) */}
               <SVGArrow
                 startX={from.x + nodeWidth - 5}
-                startY={from.y + 15}
+                startY={from.y + 18}
                 endX={to.x + 5}
-                endY={to.y + 15}
+                endY={to.y + 18}
                 color="#06b6d4"
                 label="next"
               />
               {/* Prev arrow (Bottom) */}
               <SVGArrow
                 startX={to.x + 5}
-                startY={to.y + 35}
+                startY={to.y + 42}
                 endX={from.x + nodeWidth - 5}
-                endY={from.y + 35}
+                endY={from.y + 42}
                 color="#8b5cf6"
                 label="prev"
               />
@@ -54,9 +54,9 @@ export default function DoublyListCanvas({ snapshot }) {
         {nodes.length > 0 && (
           <SVGArrow
             startX={getNodeCoords(0).x + 5}
-            startY={startY + 35}
-            endX={getNodeCoords(0).x - 35}
-            endY={startY + 35}
+            startY={startY + 42}
+            endX={getNodeCoords(0).x - 40}
+            endY={startY + 42}
             color="#64748b"
             label="prev"
           />
@@ -66,9 +66,9 @@ export default function DoublyListCanvas({ snapshot }) {
         {nodes.length > 0 && (
           <SVGArrow
             startX={getNodeCoords(nodes.length - 1).x + nodeWidth - 5}
-            startY={startY + 15}
-            endX={getNodeCoords(nodes.length - 1).x + nodeWidth + 35}
-            endY={startY + 15}
+            startY={startY + 18}
+            endX={getNodeCoords(nodes.length - 1).x + nodeWidth + 40}
+            endY={startY + 18}
             color="#64748b"
             label="next"
           />
@@ -82,8 +82,8 @@ export default function DoublyListCanvas({ snapshot }) {
 
           const coords = getNodeCoords(idx);
           const isTop = ptrName === 'head' || ptrName === 'current';
-          const py = isTop ? coords.y - 45 : coords.y + 95;
-          const ey = isTop ? coords.y - 5 : coords.y + 55;
+          const py = isTop ? coords.y - 45 : coords.y + 105;
+          const ey = isTop ? coords.y - 5 : coords.y + 65;
 
           const colorMap = {
             head: '#10b981',
@@ -124,7 +124,7 @@ export default function DoublyListCanvas({ snapshot }) {
               const isTail = node.id === tailId;
 
               const statusStyles = {
-                default: 'border-cyan-500/50 bg-dark-card text-cyan-200',
+                default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
                 active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
@@ -144,9 +144,9 @@ export default function DoublyListCanvas({ snapshot }) {
                     left: `${coords.x}px`,
                     top: `${coords.y}px`,
                     width: `${nodeWidth}px`,
-                    height: '52px'
+                    height: '60px'
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-xl transition-colors ${
+                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-2xl transition-colors ${
                     statusStyles[node.status] || statusStyles.default
                   }`}
                 >
@@ -164,9 +164,9 @@ export default function DoublyListCanvas({ snapshot }) {
                   </div>
 
                   <div className="w-full flex items-center justify-between text-xs font-mono">
-                    <span className="text-[10px] text-purple-400">&lt;prev</span>
-                    <span className="text-base font-bold text-slate-100">{node.value}</span>
-                    <span className="text-[10px] text-cyan-400">next&gt;</span>
+                    <span className="text-[11px] font-semibold text-purple-400 border border-purple-800/60 bg-purple-950/60 px-1 py-0.5 rounded">&lt;prev</span>
+                    <span className="text-lg font-bold text-slate-100 px-1">{node.value}</span>
+                    <span className="text-[11px] font-semibold text-cyan-400 border border-cyan-800/60 bg-cyan-950/60 px-1 py-0.5 rounded">next&gt;</span>
                   </div>
                 </motion.div>
               );

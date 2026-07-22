@@ -5,9 +5,9 @@ import SVGArrow from './SVGArrow';
 export default function StackCanvas({ snapshot }) {
   const { nodes = [], topId } = snapshot || {};
 
-  const itemHeight = 44;
-  const itemWidth = 140;
-  const startX = 260;
+  const itemHeight = 50;
+  const itemWidth = 170;
+  const startX = 250;
   const startY = 60;
 
   return (
@@ -21,7 +21,7 @@ export default function StackCanvas({ snapshot }) {
           left: `${startX - 15}px`,
           top: `${startY - 10}px`,
           width: `${itemWidth + 30}px`,
-          height: '290px'
+          height: '295px'
         }}
       >
         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-cyan-400 tracking-widest uppercase bg-dark-bg px-2 py-0.5 rounded border border-dark-border">
@@ -33,10 +33,10 @@ export default function StackCanvas({ snapshot }) {
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-15">
         {topId && nodes.length > 0 && (
           <SVGArrow
-            startX={startX - 75}
-            startY={startY + 22}
+            startX={startX - 80}
+            startY={startY + 25}
             endX={startX - 10}
-            endY={startY + 22}
+            endY={startY + 25}
             color="#10b981"
             label="TOP"
           />
@@ -60,7 +60,7 @@ export default function StackCanvas({ snapshot }) {
               const isTop = node.id === topId;
 
               const statusStyles = {
-                default: 'border-cyan-500/50 bg-dark-card text-cyan-200',
+                default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
                 deleting: 'border-rose-500 bg-rose-950 text-rose-200 glow-rose opacity-60 scale-90'
@@ -81,14 +81,14 @@ export default function StackCanvas({ snapshot }) {
                     width: `${itemWidth}px`,
                     height: `${itemHeight}px`
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-4 shadow-xl transition-colors ${
+                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-4 shadow-2xl transition-colors ${
                     statusStyles[node.status] || statusStyles.default
                   }`}
                 >
                   <span className="text-xs text-slate-400 font-mono">[{nodes.length - 1 - index}]</span>
-                  <span className="text-base font-bold font-mono text-slate-100">{node.value}</span>
+                  <span className="text-lg font-bold font-mono text-slate-100">{node.value}</span>
                   {isTop && (
-                    <span className="px-1.5 py-0.5 bg-emerald-500 text-slate-950 text-[9px] font-bold rounded">
+                    <span className="px-1.5 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-bold rounded">
                       TOP
                     </span>
                   )}

@@ -22,13 +22,14 @@ export class BinarySearchTreeEngine {
   }
 
   // Tái tính toán vị trí x, y cho từng Node cây (Layout calculation)
-  calculatePositions(width = 800, height = 400) {
+  // Shift depth offset down to 90px so ROOT badge and top branches never get clipped!
+  calculatePositions(width = 800, height = 440) {
     if (!this.root) return;
 
-    const assignPos = (node, depth = 0, minX = 40, maxX = width - 40) => {
+    const assignPos = (node, depth = 0, minX = 60, maxX = width - 60) => {
       if (!node) return;
       node.x = (minX + maxX) / 2;
-      node.y = 50 + depth * 70;
+      node.y = 85 + depth * 75; // Shifting y down to 85px for ample top headroom
 
       const mid = node.x;
       assignPos(node.left, depth + 1, minX, mid);
@@ -67,7 +68,7 @@ export class BinarySearchTreeEngine {
         id: newNode.id,
         value: newNode.value,
         x: width => width / 2,
-        y: 20,
+        y: 35,
         status: 'new'
       } : null
     };
@@ -264,7 +265,6 @@ export class BinarySearchTreeEngine {
         node.right = removeNode(node.right, val);
         return node;
       } else {
-        // Tìm thấy node
         steps.push({
           ...this.snapshotNodes({ [node.id]: 'deleting' }),
           pointers: { root: this.root.id, current: node.id },
@@ -272,13 +272,11 @@ export class BinarySearchTreeEngine {
           log: `Tìm thấy Node(${node.value}) cần xóa! Tiến hành xử lý con trỏ...`
         });
 
-        // Case 1: Node lá (0 con)
         if (!node.left && !node.right) {
           this.size--;
           return null;
         }
 
-        // Case 2: Chỉ có 1 con
         if (!node.left) {
           this.size--;
           return node.right;
@@ -288,7 +286,6 @@ export class BinarySearchTreeEngine {
           return node.left;
         }
 
-        // Case 3: Có 2 con -> Tìm In-order Successor (nhỏ nhất bên phải)
         let successor = node.right;
         while (successor.left) {
           successor = successor.left;
@@ -319,7 +316,7 @@ export class BinarySearchTreeEngine {
     return steps;
   }
 
-  // 4. Duyệt Cây (Traverse: In-order, Pre-order, Post-order, BFS)
+  // 4. Duyệt Cây
   traverse(type = 'inorder') {
     const steps = [];
     const visitedNodes = [];

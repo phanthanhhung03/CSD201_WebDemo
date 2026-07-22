@@ -5,9 +5,9 @@ import SVGArrow from './SVGArrow';
 export default function SinglyListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
 
-  const nodeWidth = 90;
-  const nodeGap = 50;
-  const startX = 80;
+  const nodeWidth = 115;
+  const nodeGap = 80;
+  const startX = 70;
   const startY = 160;
 
   const getNodeCoords = (index) => ({
@@ -31,9 +31,9 @@ export default function SinglyListCanvas({ snapshot }) {
             <SVGArrow
               key={`next_${node.id}`}
               startX={from.x + nodeWidth - 5}
-              startY={from.y + 25}
+              startY={from.y + 28}
               endX={to.x + 5}
-              endY={to.y + 25}
+              endY={to.y + 28}
               color="#06b6d4"
               label="next"
             />
@@ -44,9 +44,9 @@ export default function SinglyListCanvas({ snapshot }) {
         {nodes.length > 0 && (
           <SVGArrow
             startX={getNodeCoords(nodes.length - 1).x + nodeWidth - 5}
-            startY={startY + 25}
-            endX={getNodeCoords(nodes.length - 1).x + nodeWidth + 35}
-            endY={startY + 25}
+            startY={startY + 28}
+            endX={getNodeCoords(nodes.length - 1).x + nodeWidth + 40}
+            endY={startY + 28}
             color="#64748b"
             label="next"
           />
@@ -60,8 +60,8 @@ export default function SinglyListCanvas({ snapshot }) {
 
           const coords = getNodeCoords(idx);
           const isTop = ptrName === 'head' || ptrName === 'current' || ptrName === 'newNode';
-          const py = isTop ? coords.y - 45 : coords.y + 95;
-          const ey = isTop ? coords.y - 5 : coords.y + 55;
+          const py = isTop ? coords.y - 45 : coords.y + 105;
+          const ey = isTop ? coords.y - 5 : coords.y + 61;
 
           const colorMap = {
             head: '#10b981',
@@ -85,7 +85,7 @@ export default function SinglyListCanvas({ snapshot }) {
         })}
       </svg>
 
-      {/* Nodes Container (Absolute inset-0 for exact coordinate matching with SVG) */}
+      {/* Nodes Layer */}
       <div className="absolute inset-0 z-20 pointer-events-none">
         <AnimatePresence mode="popLayout">
           {nodes.length === 0 ? (
@@ -103,7 +103,7 @@ export default function SinglyListCanvas({ snapshot }) {
               const isTail = node.id === tailId;
 
               const statusStyles = {
-                default: 'border-cyan-500/50 bg-dark-card text-cyan-200',
+                default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
                 active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
@@ -124,9 +124,9 @@ export default function SinglyListCanvas({ snapshot }) {
                     left: `${coords.x}px`,
                     top: `${coords.y}px`,
                     width: `${nodeWidth}px`,
-                    height: '50px'
+                    height: '56px'
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-xl transition-colors ${
+                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-4 shadow-2xl transition-colors ${
                     statusStyles[node.status] || statusStyles.default
                   }`}
                 >
@@ -145,8 +145,8 @@ export default function SinglyListCanvas({ snapshot }) {
                   </div>
 
                   {/* Value & pointer icon */}
-                  <span className="text-base font-bold font-mono text-slate-100">{node.value}</span>
-                  <div className="w-5 h-5 rounded-full bg-dark-bg border border-cyan-500/60 flex items-center justify-center text-[10px] text-cyan-400 font-bold">
+                  <span className="text-lg font-bold font-mono text-slate-100">{node.value}</span>
+                  <div className="w-6 h-6 rounded-full bg-dark-bg border border-cyan-500/60 flex items-center justify-center text-xs text-cyan-400 font-bold">
                     &rarr;
                   </div>
                 </motion.div>
@@ -159,10 +159,10 @@ export default function SinglyListCanvas({ snapshot }) {
             <motion.div
               style={{
                 position: 'absolute',
-                left: `${getNodeCoords(nodes.length - 1).x + nodeWidth + 40}px`,
-                top: `${startY + 10}px`
+                left: `${getNodeCoords(nodes.length - 1).x + nodeWidth + 45}px`,
+                top: `${startY + 12}px`
               }}
-              className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-400 font-mono text-xs rounded-lg shadow"
+              className="px-3.5 py-1.5 bg-slate-900 border border-slate-700 text-slate-400 font-mono text-sm rounded-lg shadow-lg font-bold"
             >
               NULL
             </motion.div>

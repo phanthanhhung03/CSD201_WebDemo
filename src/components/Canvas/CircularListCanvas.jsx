@@ -6,9 +6,9 @@ import { Repeat } from 'lucide-react';
 export default function CircularListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
 
-  const nodeWidth = 90;
-  const nodeGap = 50;
-  const startX = 80;
+  const nodeWidth = 115;
+  const nodeGap = 80;
+  const startX = 70;
   const startY = 140;
 
   const getNodeCoords = (index) => ({
@@ -31,9 +31,9 @@ export default function CircularListCanvas({ snapshot }) {
             <SVGArrow
               key={`cll_next_${node.id}`}
               startX={from.x + nodeWidth - 5}
-              startY={from.y + 25}
+              startY={from.y + 28}
               endX={to.x + 5}
-              endY={to.y + 25}
+              endY={to.y + 28}
               color="#06b6d4"
               label="next"
             />
@@ -44,9 +44,9 @@ export default function CircularListCanvas({ snapshot }) {
         {nodes.length > 0 && (
           <SVGArrow
             startX={getNodeCoords(nodes.length - 1).x + nodeWidth / 2}
-            startY={startY + 55}
+            startY={startY + 60}
             endX={getNodeCoords(0).x + nodeWidth / 2}
-            endY={startY + 55}
+            endY={startY + 60}
             color="#f59e0b"
             label="tail.next -> head (CIRCULAR)"
             isCurved={true}
@@ -62,8 +62,8 @@ export default function CircularListCanvas({ snapshot }) {
 
           const coords = getNodeCoords(idx);
           const isTop = ptrName === 'head' || ptrName === 'current';
-          const py = isTop ? coords.y - 45 : coords.y + 95;
-          const ey = isTop ? coords.y - 5 : coords.y + 55;
+          const py = isTop ? coords.y - 45 : coords.y + 105;
+          const ey = isTop ? coords.y - 5 : coords.y + 61;
 
           const colorMap = {
             head: '#10b981',
@@ -103,7 +103,7 @@ export default function CircularListCanvas({ snapshot }) {
               const isTail = node.id === tailId;
 
               const statusStyles = {
-                default: 'border-cyan-500/50 bg-dark-card text-cyan-200',
+                default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
                 active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
@@ -124,9 +124,9 @@ export default function CircularListCanvas({ snapshot }) {
                     left: `${coords.x}px`,
                     top: `${coords.y}px`,
                     width: `${nodeWidth}px`,
-                    height: '50px'
+                    height: '56px'
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-xl transition-colors ${
+                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-4 shadow-2xl transition-colors ${
                     statusStyles[node.status] || statusStyles.default
                   }`}
                 >
@@ -143,8 +143,8 @@ export default function CircularListCanvas({ snapshot }) {
                     )}
                   </div>
 
-                  <span className="text-base font-bold font-mono text-slate-100">{node.value}</span>
-                  <Repeat className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
+                  <span className="text-lg font-bold font-mono text-slate-100">{node.value}</span>
+                  <Repeat className="w-4 h-4 text-amber-400 animate-spin-slow" />
                 </motion.div>
               );
             })

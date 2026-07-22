@@ -5,9 +5,9 @@ import SVGArrow from './SVGArrow';
 export default function QueueCanvas({ snapshot }) {
   const { nodes = [], frontId, rearId } = snapshot || {};
 
-  const nodeWidth = 90;
-  const nodeGap = 35;
-  const startX = 100;
+  const nodeWidth = 115;
+  const nodeGap = 70;
+  const startX = 80;
   const startY = 160;
 
   const getNodeCoords = (index) => ({
@@ -39,9 +39,9 @@ export default function QueueCanvas({ snapshot }) {
             <SVGArrow
               key={`queue_next_${node.id}`}
               startX={from.x + nodeWidth - 5}
-              startY={from.y + 25}
+              startY={from.y + 28}
               endX={to.x + 5}
-              endY={to.y + 25}
+              endY={to.y + 28}
               color="#06b6d4"
               label="next"
             />
@@ -64,9 +64,9 @@ export default function QueueCanvas({ snapshot }) {
         {rearId && nodes.length > 0 && (
           <SVGArrow
             startX={getNodeCoords(nodes.length - 1).x + nodeWidth / 2}
-            startY={startY + 95}
+            startY={startY + 105}
             endX={getNodeCoords(nodes.length - 1).x + nodeWidth / 2}
-            endY={startY + 55}
+            endY={startY + 61}
             color="#10b981"
             label="REAR"
           />
@@ -91,7 +91,7 @@ export default function QueueCanvas({ snapshot }) {
               const isRear = node.id === rearId;
 
               const statusStyles = {
-                default: 'border-cyan-500/50 bg-dark-card text-cyan-200',
+                default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105',
                 deleting: 'border-rose-500 bg-rose-950 text-rose-200 glow-rose opacity-60 scale-90'
@@ -110,14 +110,14 @@ export default function QueueCanvas({ snapshot }) {
                     left: `${coords.x}px`,
                     top: `${coords.y}px`,
                     width: `${nodeWidth}px`,
-                    height: '50px'
+                    height: '56px'
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-xl transition-colors ${
+                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-4 shadow-2xl transition-colors ${
                     statusStyles[node.status] || statusStyles.default
                   }`}
                 >
-                  <span className="text-base font-bold font-mono text-slate-100">{node.value}</span>
-                  <div className="flex flex-col gap-0.5 text-[9px] font-bold">
+                  <span className="text-lg font-bold font-mono text-slate-100">{node.value}</span>
+                  <div className="flex flex-col gap-0.5 text-[10px] font-bold">
                     {isFront && <span className="text-rose-400">FRONT</span>}
                     {isRear && <span className="text-emerald-400">REAR</span>}
                   </div>
