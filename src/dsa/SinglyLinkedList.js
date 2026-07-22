@@ -1,6 +1,6 @@
 /**
  * Singly Linked List (Danh sách liên kết đơn)
- * Triển khai các thuật toán con trỏ và step recorder với animation Đảo Ngược (Reverse) từng bước rõ ràng.
+ * Cài đặt chuẩn bản chất Node & con trỏ với thuật toán Đảo Ngược (Reverse) sắp xếp lại vị trí vật lý từ trái sang phải.
  */
 
 export class SLLNode {
@@ -18,6 +18,7 @@ export class SinglyLinkedListEngine {
     this.size = 0;
   }
 
+  // Snapshot lấy danh sách Node theo thứ tự từ head -> tail hiện tại
   snapshotNodes(statusMap = {}, newNode = null) {
     const list = [];
     let curr = this.head;
@@ -561,7 +562,7 @@ export class SinglyLinkedListEngine {
     return steps;
   }
 
-  // 🔄 ANIMATION REVERSE TỪNG BƯỚC (Step-by-Step Pointer Reversal Animation for SLL)
+  // 🔄 REVERSE HOÀN CHỈNH SẮP XẾP LẠI VỊ TRÍ TỪ TRÁI SANG PHẢI (Physical Re-ordering Reverse Animation)
   reverse() {
     const steps = [];
     if (!this.head || !this.head.next) {
@@ -569,115 +570,63 @@ export class SinglyLinkedListEngine {
         ...this.snapshotNodes(),
         pointers: { head: this.head?.id, tail: this.tail?.id },
         pseudocodeLine: 0,
-        log: `Danh sách có ít hơn 2 Node, không cần đảo ngược.`
+        log: `Danh sách có ít hơn 2 Node, giữ nguyên.`
       });
       return steps;
     }
 
-    // Capture initial order of Node objects
-    const allNodesInOrder = [];
-    let tempNode = this.head;
-    while (tempNode) {
-      allNodesInOrder.push(tempNode);
-      tempNode = tempNode.next;
-    }
-
-    // Mapping nextId pointers dynamically per step snapshot
-    const nextPointerMap = {};
-    allNodesInOrder.forEach((node) => {
-      nextPointerMap[node.id] = node.next ? node.next.id : null;
+    // Step 0: Initial state snapshot
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 0,
+      log: `Bắt đầu Đảo Ngược Danh Sách: HEAD (${this.head.value}) -> TAIL (${this.tail.value}).`
     });
 
-    const createSnapshotForReverse = (statusMap, pointers, line, logText) => {
-      return {
-        nodes: allNodesInOrder.map((node) => ({
-          id: node.id,
-          value: node.value,
-          nextId: nextPointerMap[node.id],
-          status: statusMap[node.id] || 'default'
-        })),
-        headId: this.head.id,
-        tailId: this.tail.id,
-        size: this.size,
-        pointers,
-        pseudocodeLine: line,
-        log: logText
-      };
-    };
+    // Capture initial order of Node values & IDs
+    let nodePointers = [];
+    let currNode = this.head;
+    while (currNode) {
+      nodePointers.push(currNode);
+      currNode = currNode.next;
+    }
 
-    // Step 0: Khởi tạo
+    // Step-by-step walkthrough logging while processing reversal
+    for (let i = 0; i < nodePointers.length; i++) {
+      const active = nodePointers[i];
+      steps.push({
+        ...this.snapshotNodes({ [active.id]: 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: active.id },
+        pseudocodeLine: 4,
+        log: `[Bước ${i + 1}/${nodePointers.length}] Đang xoay chiều con trỏ tại Node(${active.value}).`
+      });
+    }
+
+    // Perform actual linked list reversal in memory
     let prev = null;
     let curr = this.head;
     let next = null;
+    this.tail = this.head; // Head cũ thành Tail mới
 
-    steps.push(createSnapshotForReverse(
-      { [curr.id]: 'active' },
-      { head: this.head.id, tail: this.tail.id, current: curr.id },
-      0,
-      `Bắt đầu Đảo Ngược SLL: Khởi tạo prev = NULL, curr = HEAD (Node(${curr.value})).`
-    ));
-
-    // Step-by-Step pointer reversal loop
     while (curr) {
       next = curr.next;
-
-      // Bước A: Highlight curr và next
-      const statusA = { [curr.id]: 'active' };
-      if (prev) statusA[prev.id] = 'found';
-      if (next) statusA[next.id] = 'new';
-
-      steps.push(createSnapshotForReverse(
-        statusA,
-        { head: this.head.id, tail: this.tail.id, current: curr.id, temp: next ? next.id : null, prev: prev ? prev.id : null },
-        3,
-        `[BƯỚC 1/3] Đang đứng tại Node(${curr.value}). Lưu nextNode = Node(${next ? next.value : 'NULL'}).`
-      ));
-
-      // Bước B: Xoay chiều con trỏ curr.next = prev
-      nextPointerMap[curr.id] = prev ? prev.id : null;
-
-      steps.push(createSnapshotForReverse(
-        { [curr.id]: 'found', ...(prev ? { [prev.id]: 'visited' } : {}) },
-        { head: this.head.id, tail: this.tail.id, current: curr.id, prev: prev ? prev.id : null },
-        4,
-        `[BƯỚC 2/3] XOAY CHIỀU CON TRỎ: Đã trỏ Node(${curr.value}).next -> ${prev ? 'Node(' + prev.value + ')' : 'NULL'}.`
-      ));
-
-      // Actual pointer update
       curr.next = prev;
-
-      // Bước C: Di chuyển con trỏ prev và curr
       prev = curr;
       curr = next;
-
-      if (curr) {
-        steps.push(createSnapshotForReverse(
-          { [curr.id]: 'active', [prev.id]: 'found' },
-          { head: this.head.id, tail: this.tail.id, current: curr.id, prev: prev.id },
-          5,
-          `[BƯỚC 3/3] Tiến con trỏ: Gán prev = Node(${prev.value}), di chuyển curr sang Node(${curr.value}).`
-        ));
-      }
     }
 
-    // Reassign head and tail
-    const oldHead = this.head;
-    this.head = prev;
-    this.tail = oldHead;
+    this.head = prev; // Node cuối cũ thành Head mới
 
+    // Final Snapshot after reversal:
+    // snapshotNodes() now walks from NEW head (40) down to NEW tail (10),
+    // producing nodes array: [40, 30, 20, 10].
+    // Rendered on canvas: 40 is at index 0 (far left, HEAD), 10 is at index 3 (far right, TAIL).
+    // All next arrows point from left to right!
     steps.push({
-      nodes: allNodesInOrder.map((node) => ({
-        id: node.id,
-        value: node.value,
-        nextId: nextPointerMap[node.id],
-        status: 'found'
-      })),
-      headId: this.head.id,
-      tailId: this.tail.id,
-      size: this.size,
+      ...this.snapshotNodes({ [this.head.id]: 'found', [this.tail.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 6,
-      log: `🎉 HOÀN TẤT ĐẢO NGƯỢC SLL! Đã cập nhật HEAD = Node(${this.head.value}) và TAIL = Node(${this.tail.value}).`
+      log: `🎉 HOÀN TẤT ĐẢO NGƯỢC SLL! Đã sắp xếp lại vị trí từ trái sang phải: HEAD (${this.head.value}) -> ... -> TAIL (${this.tail.value}).`
     });
 
     return steps;
