@@ -1,6 +1,7 @@
 /**
  * Doubly Linked List (Danh sách liên kết đôi)
- * Triển khai đầy đủ con trỏ hai chiều: prev và next với animation Đảo Ngược (Reverse) ngắt con trỏ cũ -> nối con trỏ mới hai chiều mượt mà.
+ * Triển khai mô phỏng giáo dục từng bước (Pedagogical Step-by-Step Visualization).
+ * Cập nhật hai chiều con trỏ prev/next lần lượt, tối giản nhãn biến hiển thị.
  */
 
 export class DLLNode {
@@ -19,7 +20,6 @@ export class DoublyLinkedListEngine {
     this.size = 0;
   }
 
-  // Snapshot lấy danh sách Node theo thứ tự từ head -> tail hiện tại
   snapshotNodes(statusMap = {}, newNode = null) {
     const list = [];
     let curr = this.head;
@@ -417,7 +417,8 @@ export class DoublyLinkedListEngine {
     return steps;
   }
 
-  // 🔄 REVERSE DLL ANIMATION CHIA 4 SUB-STEPS (Ngắt con trỏ cũ -> Nối 2 con trỏ mới không bị đè mũi tên)
+  // 🔄 REVERSE DLL GIÁO DỤC CHUẨN SẠCH (Pedagogical Minimalist DLL Reverse)
+  // Chỉ hiển thị ĐÚNG các biến phụ được dùng trong từng sub-step nhỏ
   reverse() {
     const steps = [];
     if (!this.head || !this.head.next) {
@@ -430,7 +431,6 @@ export class DoublyLinkedListEngine {
       return steps;
     }
 
-    // Capture initial order of Node objects
     const initialNodes = [];
     let tempNode = this.head;
     while (tempNode) {
@@ -448,7 +448,7 @@ export class DoublyLinkedListEngine {
       nodeMap.set(node.id, node);
     });
 
-    const createLoopStepSnapshot = (statusMap, pointers, line, logText) => {
+    const createPedagogicalStep = (statusMap, pointers, line, logText) => {
       return {
         nodes: initialNodes.map((node) => ({
           id: node.id,
@@ -462,7 +462,7 @@ export class DoublyLinkedListEngine {
         headId: this.head.id,
         tailId: this.tail.id,
         size: this.size,
-        pointers,
+        pointers, // ONLY active pointer variables!
         pseudocodeLine: line,
         log: logText
       };
@@ -472,50 +472,39 @@ export class DoublyLinkedListEngine {
     let temp = null;
     let loopCount = 1;
 
-    steps.push(createLoopStepSnapshot(
+    steps.push(createPedagogicalStep(
       { [curr.id]: 'active' },
-      { head: this.head.id, tail: this.tail.id, current: curr.id },
+      { current: curr.id },
       0,
-      `[KHỞI TẠO DLL REVERSE] Gán current = HEAD (Node(${curr.value})), temp = NULL.`
+      `[Khởi tạo DLL Reverse] Gán current = HEAD (Node ${curr.value}), temp = NULL.`
     ));
 
     while (curr) {
-      // 1. temp = current.prev
+      // 1. temp = current.prev (CHỈ hiện CURRENT & TEMP)
       temp = curr.prev;
 
-      steps.push(createLoopStepSnapshot(
+      steps.push(createPedagogicalStep(
         { [curr.id]: 'active', ...(temp ? { [temp.id]: 'new' } : {}) },
-        { head: this.head.id, tail: this.tail.id, current: curr.id, ...(temp ? { temp: temp.id } : {}) },
+        { current: curr.id, ...(temp ? { temp: temp.id } : {}) },
         2,
-        `[Vòng ${loopCount} - Bước 1/4] temp = current.prev -> Con trỏ TEMP trỏ vào ${temp ? 'Node(' + temp.value + ')' : 'NULL'}.`
+        `[Vòng ${loopCount} - Bước 1] temp = current.prev -> Đánh dấu con trỏ TEMP vào ${temp ? 'Node(' + temp.value + ')' : 'NULL'}.`
       ));
 
-      // 2A. NGẮT 2 CON TRỎ CŨ (Làm mờ/xóa con trỏ prev & next cũ của current)
-      nextPointerMap[curr.id] = undefined;
-      prevPointerMap[curr.id] = undefined;
-
-      steps.push(createLoopStepSnapshot(
-        { [curr.id]: 'deleting', ...(temp ? { [temp.id]: 'new' } : {}) },
-        { head: this.head.id, tail: this.tail.id, current: curr.id, ...(temp ? { temp: temp.id } : {}) },
-        3,
-        `[Vòng ${loopCount} - Bước 2/4] ✂️ NGẮT CON TRỎ CŨ: Xóa 2 con trỏ next & prev cũ của Node(${curr.value}).`
-      ));
-
-      // 2B. NỐI 2 CON TRỎ MỚI ĐẢO CHIỀU (current.prev = oldNext, current.next = temp)
+      // 2. Hoán đổi 2 chiều: current.prev = current.next, current.next = temp
       curr.prev = curr.next;
       curr.next = temp;
 
       prevPointerMap[curr.id] = curr.prev ? curr.prev.id : null;
       nextPointerMap[curr.id] = curr.next ? curr.next.id : null;
 
-      steps.push(createLoopStepSnapshot(
-        { [curr.id]: 'found', ...(temp ? { [temp.id]: 'visited' } : {}) },
-        { head: this.head.id, tail: this.tail.id, current: curr.id, ...(temp ? { temp: temp.id } : {}) },
+      steps.push(createPedagogicalStep(
+        { [curr.id]: 'found' },
+        { current: curr.id, ...(temp ? { temp: temp.id } : {}) },
         3,
-        `[Vòng ${loopCount} - Bước 3/4] 🔄 NỐI CON TRỎ MỚI: Hoán đổi 2 chiều cho Node(${curr.value}) thành công! Mũi tên mới xuất hiện.`
+        `[Vòng ${loopCount} - Bước 2] 🔄 Hoán đổi 2 chiều cho Node(${curr.value}): current.prev <-> current.next!`
       ));
 
-      // Advance curr to its former next (which is now curr.prev)
+      // Advance curr
       curr = curr.prev;
       loopCount++;
     }
@@ -531,7 +520,7 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes({ [this.head.id]: 'found', [this.tail.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 4,
-      log: `🎉 HOÀN TẤT THUẬT TOÁN REVERSE DLL! Sắp xếp lại vị trí từ trái sang phải: HEAD (${this.head.value}) <-> ... <-> TAIL (${this.tail.value}).`
+      log: `🎉 HOÀN TẤT REVERSE DLL! Sắp xếp lại vị trí từ trái sang phải: HEAD (${this.head.value}) <-> ... <-> TAIL (${this.tail.value}).`
     });
 
     return steps;

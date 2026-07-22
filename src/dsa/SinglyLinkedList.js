@@ -1,6 +1,7 @@
 /**
  * Singly Linked List (Danh sách liên kết đơn)
- * Triển khai chuẩn bản chất Node & con trỏ với thuật toán Đảo Ngược (Reverse) mô phỏng 4 sub-steps ngắt con trỏ cũ -> nối con trỏ mới rõ ràng.
+ * Triển khai mô phỏng giáo dục từng bước (Pedagogical Step-by-Step Visualization).
+ * Mỗi step chỉ chứa ĐÚNG 1 biến phụ (CURRENT/NEXT/PREV) và ĐÚNG 1 thao tác thay đổi con trỏ duy nhất.
  */
 
 export class SLLNode {
@@ -18,7 +19,7 @@ export class SinglyLinkedListEngine {
     this.size = 0;
   }
 
-  // Snapshot lấy danh sách Node theo thứ tự từ head -> tail hiện tại
+  // Snapshot cơ bản lấy danh sách Node hiện tại
   snapshotNodes(statusMap = {}, newNode = null) {
     const list = [];
     let curr = this.head;
@@ -562,7 +563,8 @@ export class SinglyLinkedListEngine {
     return steps;
   }
 
-  // 🔄 REVERSE SLL VỚI ANIMATION TỪNG SUB-STEP KHÔNG CHỒNG MŨI TÊN (Clean 4-Substep Pointer Animation)
+  // 🔄 REVERSE SLL GIÁO DỤC CHUẨN SẠCH (Pedagogical Minimalist SLL Reverse)
+  // Chỉ hiển thị ĐÚNG 1-2 con trỏ biến phụ cần thiết cho từng bước nhỏ
   reverse() {
     const steps = [];
     if (!this.head || !this.head.next) {
@@ -575,7 +577,6 @@ export class SinglyLinkedListEngine {
       return steps;
     }
 
-    // Capture initial order of Node objects
     const initialNodeList = [];
     let tempNode = this.head;
     while (tempNode) {
@@ -583,24 +584,23 @@ export class SinglyLinkedListEngine {
       tempNode = tempNode.next;
     }
 
-    // Dynamic nextPointerMap tracking active links per step snapshot
     const nextPointerMap = {};
     initialNodeList.forEach((node) => {
       nextPointerMap[node.id] = node.next ? node.next.id : null;
     });
 
-    const createLoopStepSnapshot = (statusMap, pointers, line, logText) => {
+    const createPedagogicalStep = (statusMap, pointers, line, logText) => {
       return {
         nodes: initialNodeList.map((node) => ({
           id: node.id,
           value: node.value,
-          nextId: nextPointerMap[node.id], // value can be nodeId, null, or undefined (hidden)
+          nextId: nextPointerMap[node.id],
           status: statusMap[node.id] || 'default'
         })),
         headId: this.head.id,
         tailId: this.tail.id,
         size: this.size,
-        pointers,
+        pointers, // ONLY contains currently active pointer variables!
         pseudocodeLine: line,
         log: logText
       };
@@ -610,104 +610,85 @@ export class SinglyLinkedListEngine {
     let curr = this.head;
     let next = null;
 
-    // Step 0: Khởi tạo
-    steps.push(createLoopStepSnapshot(
+    // Step 0: Khởi tạo (CHỈ hiện CURRENT trên Head)
+    steps.push(createPedagogicalStep(
       { [curr.id]: 'active' },
-      { head: this.head.id, tail: this.tail.id, current: curr.id },
+      { current: curr.id },
       0,
-      `[KHỞI TẠO REVERSE] Gán prev = NULL, current = HEAD (Node(${curr.value})), next = NULL.`
+      `[Khởi tạo Reverse] Gán prev = NULL, current = HEAD (Node ${curr.value}).`
     ));
 
     let loopIndex = 1;
     while (curr) {
-      // ---------------------------------------------------------------------
-      // 1. next = current.next (Highlight node mà next đang trỏ tới)
-      // ---------------------------------------------------------------------
       next = curr.next;
 
+      // -------------------------------------------------------------
+      // BƯỚC 1: next = current.next
+      // 🌟 HIỂN THỊ DUY NHẤT: CURRENT & NEXT
+      // -------------------------------------------------------------
       const status1 = { [curr.id]: 'active' };
-      if (prev) status1[prev.id] = 'visited';
       if (next) status1[next.id] = 'new';
+      if (prev) status1[prev.id] = 'visited';
 
-      steps.push(createLoopStepSnapshot(
+      steps.push(createPedagogicalStep(
         status1,
         {
-          head: this.head.id,
-          tail: this.tail.id,
           current: curr.id,
-          ...(next ? { next: next.id } : {}),
-          ...(prev ? { prev: prev.id } : {})
+          ...(next ? { next: next.id } : {})
         },
         3,
-        `[Vòng ${loopIndex} - Bước 1/4] next = current.next -> Đánh dấu con trỏ NEXT trỏ vào Node(${next ? next.value : 'NULL'}).`
+        `[Vòng ${loopIndex} - Bước 1] next = current.next -> Đánh dấu con trỏ NEXT vào Node(${next ? next.value : 'NULL'}).`
       ));
 
-      // ---------------------------------------------------------------------
-      // 2A. NGẮT LIÊN KẾT CŨ (Con trỏ next cũ của current biến mất hoàn toàn)
-      // ---------------------------------------------------------------------
-      nextPointerMap[curr.id] = undefined; // Hide old arrow!
+      // -------------------------------------------------------------
+      // BƯỚC 2: current.next = prev
+      // 🌟 HIỂN THỊ DUY NHẤT: CURRENT & PREV (NEXT biến mất!)
+      // Mũi tên đảo chiều mới trỏ thẳng về prev!
+      // -------------------------------------------------------------
+      nextPointerMap[curr.id] = prev ? prev.id : null;
 
-      steps.push(createLoopStepSnapshot(
-        { [curr.id]: 'deleting', ...(next ? { [next.id]: 'new' } : {}), ...(prev ? { [prev.id]: 'visited' } : {}) },
+      const status2 = { [curr.id]: 'found' };
+      if (prev) status2[prev.id] = 'visited';
+
+      steps.push(createPedagogicalStep(
+        status2,
         {
-          head: this.head.id,
-          tail: this.tail.id,
           current: curr.id,
-          ...(next ? { next: next.id } : {}),
           ...(prev ? { prev: prev.id } : {})
         },
         4,
-        `[Vòng ${loopIndex} - Bước 2/4] ✂️ NGẮT CON TRỎ CŨ: Mũi tên next cũ của Node(${curr.value}) ngắt liên kết và biến mất!`
+        `[Vòng ${loopIndex} - Bước 2] 🔄 current.next = prev -> Trỏ con trỏ Node(${curr.value}).next về ${prev ? 'Node(' + prev.value + ')' : 'NULL'}!`
       ));
 
-      // ---------------------------------------------------------------------
-      // 2B. NỐI LIÊN KẾT MỚI ĐẢO CHIỀU (current.next = prev)
-      // ---------------------------------------------------------------------
-      nextPointerMap[curr.id] = prev ? prev.id : null; // New reversed arrow appears!
-
-      steps.push(createLoopStepSnapshot(
-        { [curr.id]: 'found', ...(prev ? { [prev.id]: 'visited' } : {}) },
-        {
-          head: this.head.id,
-          tail: this.tail.id,
-          current: curr.id,
-          ...(next ? { next: next.id } : {}),
-          ...(prev ? { prev: prev.id } : {})
-        },
-        4,
-        `[Vòng ${loopIndex} - Bước 3/4] 🔄 NỐI CON TRỎ MỚI: current.next = prev! Mũi tên mới xuất hiện trỏ về ${prev ? 'Node(' + prev.value + ')' : 'NULL'}.`
-      ));
-
-      // Update internal pointer link
+      // Internal link update
       curr.next = prev;
 
-      // ---------------------------------------------------------------------
-      // 3. prev = current; current = next (Tiến con trỏ sang vòng sau)
-      // ---------------------------------------------------------------------
+      // -------------------------------------------------------------
+      // BƯỚC 3: prev = current
+      // 🌟 HIỂN THỊ DUY NHẤT: PREV
+      // -------------------------------------------------------------
       prev = curr;
       curr = next;
 
       if (curr) {
-        steps.push(createLoopStepSnapshot(
-          { [curr.id]: 'active', [prev.id]: 'visited' },
+        steps.push(createPedagogicalStep(
+          { [prev.id]: 'visited', [curr.id]: 'active' },
           {
-            head: this.head.id,
-            tail: this.tail.id,
-            current: curr.id,
-            prev: prev.id
+            prev: prev.id,
+            current: curr.id
           },
           5,
-          `[Vòng ${loopIndex} - Bước 4/4] Tiến con trỏ: prev = Node(${prev.value}), current = Node(${curr.value}).`
+          `[Vòng ${loopIndex} - Bước 3] Gán prev = Node(${prev.value}), di chuyển current sang Node(${curr.value}).`
         ));
       }
 
       loopIndex++;
     }
 
-    // ---------------------------------------------------------------------
-    // BƯỚC CUỐI: Cập nhật HEAD = prev và TAIL = oldHead
-    // Sắp xếp lại vị trí danh sách từ trái sang phải với HEAD nằm bên trái!
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------
+    // KẾT THÚC: Cập nhật HEAD = prev (Node 40) & TAIL = oldHead (Node 10)
+    // Sắp xếp lại vị trí vật lý từ trái sang phải chuẩn gán HEAD bên trái!
+    // -------------------------------------------------------------
     const oldHead = this.head;
     this.head = prev;
     this.tail = oldHead;
@@ -716,7 +697,7 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [this.head.id]: 'found', [this.tail.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 6,
-      log: `🎉 HOÀN TẤT THUẬT TOÁN REVERSE SLL! Sắp xếp vị trí mới từ trái sang phải: HEAD (${this.head.value}) -> ... -> TAIL (${this.tail.value}).`
+      log: `🎉 HOÀN TẤT THUẬT TOÁN REVERSE SLL! Xếp lại vị trí mới từ trái sang phải: HEAD (${this.head.value}) -> ... -> TAIL (${this.tail.value}).`
     });
 
     return steps;
