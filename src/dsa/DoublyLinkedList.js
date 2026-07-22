@@ -1,6 +1,6 @@
 /**
  * Doubly Linked List (Danh sách liên kết đôi)
- * Triển khai đầy đủ con trỏ hai chiều: prev và next
+ * Triển khai đầy đủ con trỏ hai chiều: prev và next kèm Animation Reverse từng bước mượt mà.
  */
 
 export class DLLNode {
@@ -22,7 +22,9 @@ export class DoublyLinkedListEngine {
   snapshotNodes(statusMap = {}, newNode = null) {
     const list = [];
     let curr = this.head;
-    while (curr) {
+    const visited = new Set();
+    while (curr && !visited.has(curr.id)) {
+      visited.add(curr.id);
       list.push({
         id: curr.id,
         value: curr.value,
@@ -360,7 +362,6 @@ export class DoublyLinkedListEngine {
     return steps;
   }
 
-  // Duyệt Xuôi (Traverse Forward - Head -> Tail)
   traverseForward() {
     const steps = [];
     if (!this.head) return steps;
@@ -388,7 +389,6 @@ export class DoublyLinkedListEngine {
     return steps;
   }
 
-  // Duyệt Ngược (Traverse Backward - Tail -> Head)
   traverseBackward() {
     const steps = [];
     if (!this.tail) return steps;
@@ -416,7 +416,7 @@ export class DoublyLinkedListEngine {
     return steps;
   }
 
-  // Đảo Ngược Danh Sách (Reverse List)
+  // 🔄 ANIMATION REVERSE TỪNG BƯỚC CHO DLL (Step-by-step Reverse animation for Doubly Linked List)
   reverse() {
     const steps = [];
     if (!this.head || !this.head.next) {
@@ -424,39 +424,113 @@ export class DoublyLinkedListEngine {
         ...this.snapshotNodes(),
         pointers: { head: this.head?.id, tail: this.tail?.id },
         pseudocodeLine: 0,
-        log: `Danh sách có ít hơn 2 Node, giữ nguyên.`
+        log: `DLL có ít hơn 2 Node, giữ nguyên.`
       });
       return steps;
     }
 
+    // Capture initial ordered nodes array
+    const allNodesInOrder = [];
+    let tempNode = this.head;
+    while (tempNode) {
+      allNodesInOrder.push(tempNode);
+      tempNode = tempNode.next;
+    }
+
+    // Dynamic maps of nextId and prevId for each step snapshot
+    const nextPointerMap = {};
+    const prevPointerMap = {};
+    const nodeByIdMap = new Map();
+
+    allNodesInOrder.forEach((node) => {
+      nextPointerMap[node.id] = node.next ? node.next.id : null;
+      prevPointerMap[node.id] = node.prev ? node.prev.id : null;
+      nodeByIdMap.set(node.id, node);
+    });
+
+    const createSnapshotForReverse = (statusMap, pointers, line, logText) => {
+      return {
+        nodes: allNodesInOrder.map((node) => ({
+          id: node.id,
+          value: node.value,
+          nextId: nextPointerMap[node.id],
+          prevId: prevPointerMap[node.id],
+          nextVal: nextPointerMap[node.id] ? nodeByIdMap.get(nextPointerMap[node.id]).value : 'NULL',
+          prevVal: prevPointerMap[node.id] ? nodeByIdMap.get(prevPointerMap[node.id]).value : 'NULL',
+          status: statusMap[node.id] || 'default'
+        })),
+        headId: this.head.id,
+        tailId: this.tail.id,
+        size: this.size,
+        pointers,
+        pseudocodeLine: line,
+        log: logText
+      };
+    };
+
     let curr = this.head;
     let temp = null;
-    this.tail = this.head; // Head cũ thành Tail mới
+
+    steps.push(createSnapshotForReverse(
+      { [curr.id]: 'active' },
+      { head: this.head.id, tail: this.tail.id, current: curr.id },
+      0,
+      `Bắt đầu Đảo Ngược Doubly Linked List: Khởi tạo curr = HEAD (Node(${curr.value})).`
+    ));
 
     while (curr) {
+      // Step A: Chuẩn bị swap
+      steps.push(createSnapshotForReverse(
+        { [curr.id]: 'active' },
+        { head: this.head.id, tail: this.tail.id, current: curr.id },
+        2,
+        `[ĐẢO BƯỚC 1/2] Đang đứng tại Node(${curr.value}). Chuẩn bị tráo con trỏ prev và next.`
+      ));
+
+      // Swap actual pointers
       temp = curr.prev;
       curr.prev = curr.next;
       curr.next = temp;
 
-      steps.push({
-        ...this.snapshotNodes({ [curr.id]: 'found' }),
-        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
-        pseudocodeLine: 3,
-        log: `Hoán đổi con trỏ 2 chiều cho Node(${curr.value}): prev <-> next.`
-      });
+      // Update dynamic maps for this snapshot step
+      prevPointerMap[curr.id] = curr.prev ? curr.prev.id : null;
+      nextPointerMap[curr.id] = curr.next ? curr.next.id : null;
 
-      curr = curr.prev; // vì prev vừa gán = next cũ!
+      // Step B: Hoán đổi xong cho curr
+      steps.push(createSnapshotForReverse(
+        { [curr.id]: 'found' },
+        { head: this.head.id, tail: this.tail.id, current: curr.id },
+        3,
+        `[ĐẢO BƯỚC 2/2] ĐÃ HOÁN ĐỔI 2 CHIỀU: Node(${curr.value}).prev <-> Node(${curr.value}).next.`
+      ));
+
+      // Advance curr to its former next (which is now curr.prev)
+      curr = curr.prev;
     }
 
+    // Reassign head and tail
+    const oldHead = this.head;
     if (temp) {
       this.head = temp.prev;
     }
+    this.tail = oldHead;
 
     steps.push({
-      ...this.snapshotNodes(),
+      nodes: allNodesInOrder.map((node) => ({
+        id: node.id,
+        value: node.value,
+        nextId: nextPointerMap[node.id],
+        prevId: prevPointerMap[node.id],
+        nextVal: nextPointerMap[node.id] ? nodeByIdMap.get(nextPointerMap[node.id]).value : 'NULL',
+        prevVal: prevPointerMap[node.id] ? nodeByIdMap.get(prevPointerMap[node.id]).value : 'NULL',
+        status: 'found'
+      })),
+      headId: this.head.id,
+      tailId: this.tail.id,
+      size: this.size,
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 4,
-      log: `Hoàn tất Đảo Ngược Doubly Linked List! (Head mới = Node(${this.head.value})).`
+      log: `🎉 HOÀN TẤT ĐẢO NGƯỢC DLL! Cập nhật HEAD = Node(${this.head.value}) và TAIL = Node(${this.tail.value}).`
     });
 
     return steps;
