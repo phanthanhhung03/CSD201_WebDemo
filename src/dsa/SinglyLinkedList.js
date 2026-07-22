@@ -1,6 +1,6 @@
 /**
  * Singly Linked List (Danh sách liên kết đơn)
- * Triển khai chuẩn bản chất Node & con trỏ với thuật toán Đảo Ngược (Reverse) mô phỏng từng bước đổi hướng mũi tên thực tế.
+ * Triển khai chuẩn bản chất Node & con trỏ với thuật toán Đảo Ngược (Reverse) mô phỏng 4 sub-steps ngắt con trỏ cũ -> nối con trỏ mới rõ ràng.
  */
 
 export class SLLNode {
@@ -562,7 +562,7 @@ export class SinglyLinkedListEngine {
     return steps;
   }
 
-  // 🔄 ANIMATION REVERSE MÔ PHỎNG TỪNG BƯỚC THỰC TẾ (Step-by-Step Pointer Reversal Simulation)
+  // 🔄 REVERSE SLL VỚI ANIMATION TỪNG SUB-STEP KHÔNG CHỒNG MŨI TÊN (Clean 4-Substep Pointer Animation)
   reverse() {
     const steps = [];
     if (!this.head || !this.head.next) {
@@ -575,7 +575,7 @@ export class SinglyLinkedListEngine {
       return steps;
     }
 
-    // Capture initial order of Node objects (positions stay fixed during loop animation)
+    // Capture initial order of Node objects
     const initialNodeList = [];
     let tempNode = this.head;
     while (tempNode) {
@@ -583,7 +583,7 @@ export class SinglyLinkedListEngine {
       tempNode = tempNode.next;
     }
 
-    // Dynamic map tracking nextId for each node step-by-step
+    // Dynamic nextPointerMap tracking active links per step snapshot
     const nextPointerMap = {};
     initialNodeList.forEach((node) => {
       nextPointerMap[node.id] = node.next ? node.next.id : null;
@@ -594,7 +594,7 @@ export class SinglyLinkedListEngine {
         nodes: initialNodeList.map((node) => ({
           id: node.id,
           value: node.value,
-          nextId: nextPointerMap[node.id],
+          nextId: nextPointerMap[node.id], // value can be nodeId, null, or undefined (hidden)
           status: statusMap[node.id] || 'default'
         })),
         headId: this.head.id,
@@ -606,11 +606,11 @@ export class SinglyLinkedListEngine {
       };
     };
 
-    // Step 0: Khởi tạo biến phụ prev = null, current = head, next = null
     let prev = null;
     let curr = this.head;
     let next = null;
 
+    // Step 0: Khởi tạo
     steps.push(createLoopStepSnapshot(
       { [curr.id]: 'active' },
       { head: this.head.id, tail: this.tail.id, current: curr.id },
@@ -618,10 +618,10 @@ export class SinglyLinkedListEngine {
       `[KHỞI TẠO REVERSE] Gán prev = NULL, current = HEAD (Node(${curr.value})), next = NULL.`
     ));
 
-    let loopCount = 1;
+    let loopIndex = 1;
     while (curr) {
       // ---------------------------------------------------------------------
-      // 1. next = current.next (Highlight Node mà next đang trỏ tới)
+      // 1. next = current.next (Highlight node mà next đang trỏ tới)
       // ---------------------------------------------------------------------
       next = curr.next;
 
@@ -629,46 +629,56 @@ export class SinglyLinkedListEngine {
       if (prev) status1[prev.id] = 'visited';
       if (next) status1[next.id] = 'new';
 
-      const pointers1 = {
-        head: this.head.id,
-        tail: this.tail.id,
-        current: curr.id,
-        ...(next ? { next: next.id } : {}),
-        ...(prev ? { prev: prev.id } : {})
-      };
-
       steps.push(createLoopStepSnapshot(
         status1,
-        pointers1,
+        {
+          head: this.head.id,
+          tail: this.tail.id,
+          current: curr.id,
+          ...(next ? { next: next.id } : {}),
+          ...(prev ? { prev: prev.id } : {})
+        },
         3,
-        `[Vòng ${loopCount} - Bước 1/3] next = current.next -> Highlight Node(${next ? next.value : 'NULL'}) mà con trỏ NEXT tham chiếu.`
+        `[Vòng ${loopIndex} - Bước 1/4] next = current.next -> Đánh dấu con trỏ NEXT trỏ vào Node(${next ? next.value : 'NULL'}).`
       ));
 
       // ---------------------------------------------------------------------
-      // 2. current.next = prev (THỂ HIỆN TRỰC TIẾP MŨI TÊN ĐỔI HƯỚNG BẤT KỲ LÚC NÀO!)
+      // 2A. NGẮT LIÊN KẾT CŨ (Con trỏ next cũ của current biến mất hoàn toàn)
       // ---------------------------------------------------------------------
-      nextPointerMap[curr.id] = prev ? prev.id : null; // Đổi hướng con trỏ next trong map!
-
-      const status2 = { [curr.id]: 'found' };
-      if (prev) status2[prev.id] = 'visited';
-      if (next) status2[next.id] = 'new';
-
-      const pointers2 = {
-        head: this.head.id,
-        tail: this.tail.id,
-        current: curr.id,
-        ...(next ? { next: next.id } : {}),
-        ...(prev ? { prev: prev.id } : {})
-      };
+      nextPointerMap[curr.id] = undefined; // Hide old arrow!
 
       steps.push(createLoopStepSnapshot(
-        status2,
-        pointers2,
+        { [curr.id]: 'deleting', ...(next ? { [next.id]: 'new' } : {}), ...(prev ? { [prev.id]: 'visited' } : {}) },
+        {
+          head: this.head.id,
+          tail: this.tail.id,
+          current: curr.id,
+          ...(next ? { next: next.id } : {}),
+          ...(prev ? { prev: prev.id } : {})
+        },
         4,
-        `[Vòng ${loopCount} - Bước 2/3] 🔄 ĐỔI HƯỚNG MŨI TÊN: current.next = prev! Mũi tên Node(${curr.value}).next ${prev ? 'XOAY NGƯỢC RÕ RÀNG trỏ về Node(' + prev.value + ')' : 'ngắt liên kết trỏ về NULL'}.`
+        `[Vòng ${loopIndex} - Bước 2/4] ✂️ NGẮT CON TRỎ CŨ: Mũi tên next cũ của Node(${curr.value}) ngắt liên kết và biến mất!`
       ));
 
-      // Actual internal pointer update
+      // ---------------------------------------------------------------------
+      // 2B. NỐI LIÊN KẾT MỚI ĐẢO CHIỀU (current.next = prev)
+      // ---------------------------------------------------------------------
+      nextPointerMap[curr.id] = prev ? prev.id : null; // New reversed arrow appears!
+
+      steps.push(createLoopStepSnapshot(
+        { [curr.id]: 'found', ...(prev ? { [prev.id]: 'visited' } : {}) },
+        {
+          head: this.head.id,
+          tail: this.tail.id,
+          current: curr.id,
+          ...(next ? { next: next.id } : {}),
+          ...(prev ? { prev: prev.id } : {})
+        },
+        4,
+        `[Vòng ${loopIndex} - Bước 3/4] 🔄 NỐI CON TRỎ MỚI: current.next = prev! Mũi tên mới xuất hiện trỏ về ${prev ? 'Node(' + prev.value + ')' : 'NULL'}.`
+      ));
+
+      // Update internal pointer link
       curr.next = prev;
 
       // ---------------------------------------------------------------------
@@ -687,16 +697,16 @@ export class SinglyLinkedListEngine {
             prev: prev.id
           },
           5,
-          `[Vòng ${loopCount} - Bước 3/3] Tiến con trỏ: prev = Node(${prev.value}), current = Node(${curr.value}).`
+          `[Vòng ${loopIndex} - Bước 4/4] Tiến con trỏ: prev = Node(${prev.value}), current = Node(${curr.value}).`
         ));
       }
 
-      loopCount++;
+      loopIndex++;
     }
 
     // ---------------------------------------------------------------------
-    // BƯỚC CUỐI: Cập nhật HEAD = prev (40) và TAIL = oldHead (10)
-    // Sắp xếp lại danh sách Node từ trái sang phải với HEAD nằm bên trái!
+    // BƯỚC CUỐI: Cập nhật HEAD = prev và TAIL = oldHead
+    // Sắp xếp lại vị trí danh sách từ trái sang phải với HEAD nằm bên trái!
     // ---------------------------------------------------------------------
     const oldHead = this.head;
     this.head = prev;
@@ -706,7 +716,7 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [this.head.id]: 'found', [this.tail.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 6,
-      log: `🎉 HOÀN TẤT THUẬT TOÁN REVERSE! Đã sắp xếp lại danh sách từ trái sang phải: HEAD (${this.head.value}) -> TAIL (${this.tail.value}). All arrows updated!`
+      log: `🎉 HOÀN TẤT THUẬT TOÁN REVERSE SLL! Sắp xếp vị trí mới từ trái sang phải: HEAD (${this.head.value}) -> ... -> TAIL (${this.tail.value}).`
     });
 
     return steps;
