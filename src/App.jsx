@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DSA_TYPES, SPEED_PRESETS } from './types/dsaTypes';
 import { PSEUDOCODES } from './pseudocode/pseudocodes';
 import { SinglyLinkedListEngine } from './dsa/SinglyLinkedList';
@@ -27,8 +27,8 @@ export default function App() {
   const sllEngine = useMemo(() => new SinglyLinkedListEngine(), []);
   const dllEngine = useMemo(() => new DoublyLinkedListEngine(), []);
   const cllEngine = useMemo(() => new CircularLinkedListEngine(), []);
-  const stackEngine = useMemo(() => new StackLLEngine(), []);
-  const queueEngine = useMemo(() => new QueueLLEngine(), []);
+  const stackEngine = useMemo(() => new StackLLEngine(6), []);
+  const queueEngine = useMemo(() => new QueueLLEngine(6), []);
   const bstEngine = useMemo(() => new BinarySearchTreeEngine(), []);
 
   // Map active type to engine
@@ -128,37 +128,59 @@ export default function App() {
       else if (operation === 'insertAtIndex') generatedSteps = engine.insertAtIndex(payload.index, payload.value);
       else if (operation === 'deleteHead') generatedSteps = engine.deleteHead();
       else if (operation === 'deleteTail') generatedSteps = engine.deleteTail();
+      else if (operation === 'deleteAtIndex') generatedSteps = engine.deleteAtIndex(payload.index);
       else if (operation === 'deleteValue') generatedSteps = engine.deleteValue(payload.value);
       else if (operation === 'search') generatedSteps = engine.search(payload.value);
+      else if (operation === 'traverse') generatedSteps = engine.traverse();
+      else if (operation === 'getFirst') generatedSteps = engine.getFirst();
+      else if (operation === 'getLast') generatedSteps = engine.getLast();
+      else if (operation === 'getByIndex') generatedSteps = engine.getByIndex(payload.index);
+      else if (operation === 'reverse') generatedSteps = engine.reverse();
     } else if (activeType === DSA_TYPES.DLL) {
       if (operation === 'insertHead') generatedSteps = engine.insertHead(payload.value);
       else if (operation === 'insertTail') generatedSteps = engine.insertTail(payload.value);
+      else if (operation === 'insertAtIndex') generatedSteps = engine.insertAtIndex(payload.index, payload.value);
       else if (operation === 'deleteHead') generatedSteps = engine.deleteHead();
       else if (operation === 'deleteTail') generatedSteps = engine.deleteTail();
+      else if (operation === 'deleteAtIndex') generatedSteps = engine.deleteAtIndex(payload.index);
       else if (operation === 'search') generatedSteps = engine.search(payload.value);
+      else if (operation === 'traverseForward') generatedSteps = engine.traverseForward();
+      else if (operation === 'traverseBackward') generatedSteps = engine.traverseBackward();
+      else if (operation === 'reverse') generatedSteps = engine.reverse();
     } else if (activeType === DSA_TYPES.CLL) {
       if (operation === 'insert') generatedSteps = engine.insert(payload.value);
       else if (operation === 'delete') generatedSteps = engine.delete(payload.value);
+      else if (operation === 'search') generatedSteps = engine.search(payload.value);
       else if (operation === 'traverse') generatedSteps = engine.traverse();
+      else if (operation === 'traverse2Loops') generatedSteps = engine.traverseMultipleLoops(2);
     } else if (activeType === DSA_TYPES.STACK) {
       if (operation === 'push') generatedSteps = engine.push(payload.value);
       else if (operation === 'pop') generatedSteps = engine.pop();
       else if (operation === 'peek') generatedSteps = engine.peek();
+      else if (operation === 'isEmpty') generatedSteps = engine.isEmpty();
+      else if (operation === 'clear') generatedSteps = engine.clear();
     } else if (activeType === DSA_TYPES.QUEUE) {
       if (operation === 'enqueue') generatedSteps = engine.enqueue(payload.value);
       else if (operation === 'dequeue') generatedSteps = engine.dequeue();
       else if (operation === 'peek') generatedSteps = engine.peek();
+      else if (operation === 'peekRear') generatedSteps = engine.peekRear();
+      else if (operation === 'isEmpty') generatedSteps = engine.isEmpty();
+      else if (operation === 'clear') generatedSteps = engine.clear();
     } else if (activeType === DSA_TYPES.BST) {
       if (operation === 'insert') generatedSteps = engine.insert(payload.value);
       else if (operation === 'remove') generatedSteps = engine.remove(payload.value);
       else if (operation === 'search') generatedSteps = engine.search(payload.value);
+      else if (operation === 'findMin') generatedSteps = engine.findMin();
+      else if (operation === 'findMax') generatedSteps = engine.findMax();
+      else if (operation === 'getHeight') generatedSteps = engine.getHeight();
+      else if (operation === 'countLeaves') generatedSteps = engine.countLeaves();
       else if (operation === 'traverse') generatedSteps = engine.traverse(payload.traverseType);
     }
 
     if (generatedSteps && generatedSteps.length > 0) {
       setSteps(generatedSteps);
       setCurrentStep(0);
-      setIsPlaying(true); // Tự động phát khi người dùng bấm nút thực thi
+      setIsPlaying(true);
     }
   };
 
@@ -195,6 +217,8 @@ export default function App() {
         onPreset={() => loadPreset()}
         onRandom={loadRandom}
         onClear={clearData}
+        currentSize={currentSnapshot.size ?? getActiveEngine().size}
+        currentCapacity={currentSnapshot.capacity ?? (activeType === DSA_TYPES.STACK || activeType === DSA_TYPES.QUEUE ? 6 : null)}
       />
 
       {/* Main Layout Grid */}

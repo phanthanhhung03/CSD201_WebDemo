@@ -1,6 +1,6 @@
 /**
  * Queue (Hàng đợi triển khai bằng Linked List - FIFO)
- * Quản lý 2 con trỏ: FRONT (vào trước) và REAR (vào sau)
+ * Quản lý 2 con trỏ: FRONT và REAR, Capacity dung lượng, Overflow/Underflow
  */
 
 export class QueueNode {
@@ -12,13 +12,14 @@ export class QueueNode {
 }
 
 export class QueueLLEngine {
-  constructor() {
+  constructor(capacity = 6) {
     this.front = null;
     this.rear = null;
     this.size = 0;
+    this.capacity = capacity;
   }
 
-  snapshotNodes(statusMap = {}, newNode = null) {
+  snapshotNodes(statusMap = {}, newNode = null, alertMessage = null) {
     const list = [];
     let curr = this.front;
     while (curr) {
@@ -35,6 +36,8 @@ export class QueueLLEngine {
       frontId: this.front ? this.front.id : null,
       rearId: this.rear ? this.rear.id : null,
       size: this.size,
+      capacity: this.capacity,
+      alertMessage,
       newNode: newNode ? { id: newNode.id, value: newNode.value, status: 'new' } : null
     };
   }
@@ -43,7 +46,7 @@ export class QueueLLEngine {
     this.front = null;
     this.rear = null;
     this.size = 0;
-    for (const val of values) {
+    for (const val of values.slice(0, this.capacity)) {
       const node = new QueueNode(val);
       if (!this.front) {
         this.front = node;
@@ -59,13 +62,25 @@ export class QueueLLEngine {
 
   enqueue(value) {
     const steps = [];
+
+    // Check QUEUE OVERFLOW
+    if (this.size >= this.capacity) {
+      steps.push({
+        ...this.snapshotNodes({}, null, 'QUEUE OVERFLOW!'),
+        pointers: { front: this.front?.id, rear: this.rear?.id },
+        pseudocodeLine: 0,
+        log: `⚠️ QUEUE OVERFLOW! Hàng đợi đã đầy dung lượng tối đa (Size = ${this.size} / Capacity = ${this.capacity}). Không thể ENQUEUE!`
+      });
+      return steps;
+    }
+
     const newNode = new QueueNode(value);
 
     steps.push({
       ...this.snapshotNodes({}, newNode),
       pointers: { front: this.front?.id, rear: this.rear?.id, newNode: newNode.id },
-      pseudocodeLine: 0,
-      log: `Tạo newNode = Node(${value}) chuẩn bị ENQUEUE vào hàng đợi.`
+      pseudocodeLine: 1,
+      log: `Tạo newNode = Node(${value}) chuẩn bị ENQUEUE vào Queue.`
     });
 
     if (!this.rear) {
@@ -76,8 +91,8 @@ export class QueueLLEngine {
       steps.push({
         ...this.snapshotNodes({ [newNode.id]: 'found' }),
         pointers: { front: this.front.id, rear: this.rear.id },
-        pseudocodeLine: 1,
-        log: `Queue rỗng: Gán front = rear = newNode(${value}).`
+        pseudocodeLine: 2,
+        log: `Queue rỗng: Gán front = rear = newNode(${value}). (Size = ${this.size} / ${this.capacity})`
       });
       return steps;
     }
@@ -88,7 +103,7 @@ export class QueueLLEngine {
     steps.push({
       ...this.snapshotNodes({ [oldRearId]: 'active', [newNode.id]: 'new' }),
       pointers: { front: this.front.id, rear: oldRearId, newNode: newNode.id },
-      pseudocodeLine: 2,
+      pseudocodeLine: 3,
       log: `Trỏ rear.next -> newNode(${value}).`
     });
 
@@ -98,8 +113,8 @@ export class QueueLLEngine {
     steps.push({
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { front: this.front.id, rear: this.rear.id },
-      pseudocodeLine: 2,
-      log: `Cập nhật con trỏ rear = newNode. Đã ENQUEUE thành công!`
+      pseudocodeLine: 4,
+      log: `Cập nhật con trỏ rear = newNode(${value}). Đã ENQUEUE vào hàng thành công! (Size = ${this.size} / ${this.capacity})`
     });
 
     return steps;
@@ -107,12 +122,14 @@ export class QueueLLEngine {
 
   dequeue() {
     const steps = [];
-    if (!this.front) {
+
+    // Check QUEUE UNDERFLOW
+    if (!this.front || this.size === 0) {
       steps.push({
-        ...this.snapshotNodes(),
+        ...this.snapshotNodes({}, null, 'QUEUE UNDERFLOW!'),
         pointers: {},
         pseudocodeLine: 0,
-        log: `QueueUnderflow: Hàng đợi rỗng!`
+        log: `⚠️ QUEUE UNDERFLOW! Hàng đợi rỗng (Size = 0), không thể DEQUEUE!`
       });
       return steps;
     }
@@ -135,7 +152,7 @@ export class QueueLLEngine {
       ...this.snapshotNodes(),
       pointers: { front: this.front?.id, rear: this.rear?.id },
       pseudocodeLine: 2,
-      log: `Di chuyển front = front.next. Đã DEQUEUE thành công giá trị ${temp.value}!`
+      log: `Di chuyển front = front.next. Đã DEQUEUE giá trị ${temp.value} ra khỏi hàng! (Size = ${this.size} / ${this.capacity})`
     });
 
     return steps;
@@ -145,10 +162,10 @@ export class QueueLLEngine {
     const steps = [];
     if (!this.front) {
       steps.push({
-        ...this.snapshotNodes(),
+        ...this.snapshotNodes({}, null, 'QUEUE EMPTY'),
         pointers: {},
         pseudocodeLine: 0,
-        log: `Queue rỗng! Peek trả về NULL.`
+        log: `Queue rỗng! Peek FRONT trả về NULL.`
       });
       return steps;
     }
@@ -157,7 +174,64 @@ export class QueueLLEngine {
       ...this.snapshotNodes({ [this.front.id]: 'found' }),
       pointers: { front: this.front.id, rear: this.rear.id },
       pseudocodeLine: 1,
-      log: `PEEK: Node ở đầu hàng đợi front = Node(${this.front.value}).`
+      log: `PEEK FRONT: Phần tử đầu hàng đợi (FRONT) có giá trị = ${this.front.value}.`
+    });
+
+    return steps;
+  }
+
+  peekRear() {
+    const steps = [];
+    if (!this.rear) {
+      steps.push({
+        ...this.snapshotNodes({}, null, 'QUEUE EMPTY'),
+        pointers: {},
+        pseudocodeLine: 0,
+        log: `Queue rỗng! Peek REAR trả về NULL.`
+      });
+      return steps;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [this.rear.id]: 'found' }),
+      pointers: { front: this.front?.id, rear: this.rear.id },
+      pseudocodeLine: 1,
+      log: `PEEK REAR: Phần tử cuối hàng đợi (REAR) có giá trị = ${this.rear.value}.`
+    });
+
+    return steps;
+  }
+
+  isEmpty() {
+    const steps = [];
+    const empty = this.size === 0;
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { front: this.front?.id, rear: this.rear?.id },
+      pseudocodeLine: 0,
+      log: `Kiểm tra isEmpty(): Queue hiện tại đang ${empty ? 'RỖNG (Size = 0)' : 'KHÔNG RỖNG (Size = ' + this.size + ')'}.`
+    });
+    return steps;
+  }
+
+  clear() {
+    const steps = [];
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { front: this.front?.id, rear: this.rear?.id },
+      pseudocodeLine: 0,
+      log: `Tiến hành làm rỗng Hàng đợi Queue...`
+    });
+
+    this.front = null;
+    this.rear = null;
+    this.size = 0;
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: {},
+      pseudocodeLine: 0,
+      log: `Đã làm rỗng Queue! (Size = 0, front = rear = NULL).`
     });
 
     return steps;

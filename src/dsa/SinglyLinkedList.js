@@ -1,7 +1,6 @@
 /**
  * Singly Linked List (Danh sách liên kết đơn)
- * Sử dụng đúng bản chất Node con trỏ (Node { value, next })
- * Tạo chuỗi Snapshot cho Visualizer
+ * Triển khai các thuật toán con trỏ và step recorder
  */
 
 export class SLLNode {
@@ -19,7 +18,6 @@ export class SinglyLinkedListEngine {
     this.size = 0;
   }
 
-  // Clone danh sách Node hiện tại để tạo Snapshot
   snapshotNodes(statusMap = {}, newNode = null) {
     const list = [];
     let curr = this.head;
@@ -45,7 +43,6 @@ export class SinglyLinkedListEngine {
     };
   }
 
-  // Khởi tạo danh sách mẫu
   setInitialData(values) {
     this.head = null;
     this.tail = null;
@@ -64,20 +61,17 @@ export class SinglyLinkedListEngine {
     return this.snapshotNodes();
   }
 
-  // 1. Thêm vào Đầu (insertHead)
   insertHead(value) {
     const steps = [];
     const newNode = new SLLNode(value);
 
-    // Step 0: Tạo newNode
     steps.push({
       ...this.snapshotNodes({ [newNode.id]: 'new' }, newNode),
       pointers: { head: this.head?.id, tail: this.tail?.id, newNode: newNode.id },
       pseudocodeLine: 0,
-      log: `Khởi tạo Node mới có giá trị = ${value} tại vùng nhớ tạm.`
+      log: `Khởi tạo Node mới Node(${value}).`
     });
 
-    // Step 1: newNode.next = head
     newNode.next = this.head;
     steps.push({
       nodes: [
@@ -92,7 +86,6 @@ export class SinglyLinkedListEngine {
       log: `Trỏ newNode.next -> head (${this.head ? 'Node(' + this.head.value + ')' : 'NULL'}).`
     });
 
-    // Step 2: head = newNode
     this.head = newNode;
     if (!this.tail) {
       this.tail = newNode;
@@ -103,18 +96,16 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 2,
-      log: `Cập nhật con trỏ head trỏ tới Node mới (${value}). Thêm đầu hoàn tất!`
+      log: `Cập nhật con trỏ head trỏ tới Node(${value}). Thêm đầu thành công! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 2. Thêm vào Cuối (insertTail)
   insertTail(value) {
     const steps = [];
     const newNode = new SLLNode(value);
 
-    // Step 0: Tạo newNode
     steps.push({
       ...this.snapshotNodes({}, newNode),
       pointers: { head: this.head?.id, tail: this.tail?.id, newNode: newNode.id },
@@ -135,7 +126,6 @@ export class SinglyLinkedListEngine {
       return steps;
     }
 
-    // Step 1: tail.next = newNode
     const oldTailId = this.tail.id;
     this.tail.next = newNode;
 
@@ -146,7 +136,6 @@ export class SinglyLinkedListEngine {
       log: `Trỏ tail.next (${this.tail.value}) tới newNode (${value}).`
     });
 
-    // Step 2: tail = newNode
     this.tail = newNode;
     this.size++;
 
@@ -154,13 +143,12 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 3,
-      log: `Cập nhật con trỏ tail trỏ tới newNode(${value}). Thêm cuối hoàn tất!`
+      log: `Cập nhật con trỏ tail = newNode(${value}). Thêm cuối thành công! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 3. Thêm tại Vị trí Index (insertAtIndex)
   insertAtIndex(index, value) {
     if (index <= 0) return this.insertHead(value);
     if (index >= this.size) return this.insertTail(value);
@@ -183,7 +171,7 @@ export class SinglyLinkedListEngine {
         ...this.snapshotNodes({ [curr.id]: 'active' }, newNode),
         pointers: { head: this.head.id, tail: this.tail.id, current: curr.id, newNode: newNode.id },
         pseudocodeLine: 3,
-        log: `Truy vết con trỏ curr -> Node(${curr.value}) tại vị trí ${i}.`
+        log: `Truy vết con trỏ curr -> Node(${curr.value}) tại vị trí index ${i}.`
       });
       curr = curr.next;
       i++;
@@ -196,7 +184,6 @@ export class SinglyLinkedListEngine {
       log: `Tìm thấy Node trước vị trí chèn: Node(${curr.value}) tại index ${index - 1}.`
     });
 
-    // newNode.next = curr.next
     newNode.next = curr.next;
     steps.push({
       ...this.snapshotNodes({ [curr.id]: 'active' }, newNode),
@@ -205,7 +192,6 @@ export class SinglyLinkedListEngine {
       log: `Trỏ newNode.next -> curr.next (${curr.next ? 'Node(' + curr.next.value + ')' : 'NULL'}).`
     });
 
-    // curr.next = newNode
     curr.next = newNode;
     this.size++;
 
@@ -213,13 +199,12 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id, newNode: newNode.id },
       pseudocodeLine: 5,
-      log: `Trỏ curr.next -> newNode. Đã chèn thành công Node(${value}) vào vị trí ${index}!`
+      log: `Trỏ curr.next -> newNode. Đã chèn Node(${value}) vào vị trí ${index}! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 4. Xóa Node Đầu (deleteHead)
   deleteHead() {
     const steps = [];
     if (!this.head) {
@@ -250,13 +235,12 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes(),
       pointers: { head: this.head?.id, tail: this.tail?.id },
       pseudocodeLine: 2,
-      log: `Di chuyển con trỏ head sang head.next. Node(${temp.value}) đã được giải phóng khỏi danh sách!`
+      log: `Di chuyển con trỏ head sang head.next. Đã xóa Node đầu! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 5. Xóa Node Cuối (deleteTail)
   deleteTail() {
     const steps = [];
     if (!this.head) {
@@ -264,7 +248,7 @@ export class SinglyLinkedListEngine {
         ...this.snapshotNodes(),
         pointers: {},
         pseudocodeLine: 0,
-        log: `Danh sách rỗng, không có Node để xóa.`
+        log: `Danh sách rỗng!`
       });
       return steps;
     }
@@ -295,7 +279,7 @@ export class SinglyLinkedListEngine {
         ...this.snapshotNodes({ [curr.id]: 'active' }),
         pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
         pseudocodeLine: 2,
-        log: `Tìm Node đứng trước tail: Duyệt curr -> Node(${curr.value}).`
+        log: `Duyệt curr -> Node(${curr.value}) để tìm Node kế cuối.`
       });
       curr = curr.next;
     }
@@ -304,7 +288,7 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [curr.id]: 'active', [this.tail.id]: 'deleting' }),
       pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
       pseudocodeLine: 2,
-      log: `Tìm thấy Node trước tail: Node(${curr.value}). Đánh dấu xóa tail Node(${this.tail.value}).`
+      log: `Tìm thấy Node kế cuối: Node(${curr.value}). Xóa tail Node(${this.tail.value}).`
     });
 
     curr.next = null;
@@ -315,13 +299,61 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [this.tail.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 3,
-      log: `Cập nhật tail = curr, tail.next = NULL. Đã xóa Node cuối!`
+      log: `Cập nhật tail = curr, tail.next = NULL. Đã xóa Node cuối! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 6. Xóa theo Giá trị (deleteValue)
+  // Xóa theo Index
+  deleteAtIndex(index) {
+    if (index < 0 || index >= this.size) {
+      return [{
+        ...this.snapshotNodes(),
+        pointers: { head: this.head?.id, tail: this.tail?.id },
+        pseudocodeLine: 0,
+        log: `Chỉ số index ${index} không hợp lệ! (Size = ${this.size})`
+      }];
+    }
+    if (index === 0) return this.deleteHead();
+    if (index === this.size - 1) return this.deleteTail();
+
+    const steps = [];
+    let curr = this.head;
+    let i = 0;
+
+    while (i < index - 1) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `Duyệt curr sang Node(${curr.value}) tại vị trí index ${i}.`
+      });
+      curr = curr.next;
+      i++;
+    }
+
+    const temp = curr.next;
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'active', [temp.id]: 'deleting' }),
+      pointers: { head: this.head.id, tail: this.tail.id, current: curr.id, temp: temp.id },
+      pseudocodeLine: 4,
+      log: `Tìm thấy Node(${temp.value}) tại index ${index}. Tiến hành bỏ qua liên kết.`
+    });
+
+    curr.next = temp.next;
+    this.size--;
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'found' }),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 5,
+      log: `Cập nhật curr.next = temp.next. Xóa Node tại index ${index} thành công! (Size = ${this.size})`
+    });
+
+    return steps;
+  }
+
   deleteValue(val) {
     const steps = [];
     if (!this.head) {
@@ -344,7 +376,7 @@ export class SinglyLinkedListEngine {
         ...this.snapshotNodes({ [curr.id]: 'active' }),
         pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
         pseudocodeLine: 3,
-        log: `Kiểm tra curr.next.value (${curr.next.value}) != target (${val}). Duyệt tiếp curr.`
+        log: `Kiểm tra curr.next.value (${curr.next.value}) != ${val}. Duyệt tiếp curr.`
       });
       curr = curr.next;
     }
@@ -377,13 +409,12 @@ export class SinglyLinkedListEngine {
       ...this.snapshotNodes({ [curr.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 5,
-      log: `Trỏ curr.next = temp.next. Đã xóa Node(${val}) khỏi danh sách!`
+      log: `Trỏ curr.next = temp.next. Đã xóa Node(${val})! (Size = ${this.size})`
     });
 
     return steps;
   }
 
-  // 7. Tìm kiếm (Search)
   search(val) {
     const steps = [];
     let curr = this.head;
@@ -396,8 +427,8 @@ export class SinglyLinkedListEngine {
         pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
         pseudocodeLine: isMatch ? 2 : 3,
         log: isMatch
-          ? `TÌM THẤY! Node(${curr.value}) trùng khớp tại chỉ số index = ${idx}.`
-          : `So sánh Node(${curr.value}) với ${val} -> Không trùng khớp. Chuyển sang node tiếp theo.`
+          ? `TÌM THẤY! Node(${curr.value}) trùng khớp tại vị trí index = ${idx}.`
+          : `So sánh Node(${curr.value}) với ${val} -> Không trùng khớp. Chuyển sang next.`
       });
 
       if (isMatch) return steps;
@@ -410,6 +441,182 @@ export class SinglyLinkedListEngine {
       pointers: { head: this.head?.id, tail: this.tail?.id },
       pseudocodeLine: 4,
       log: `Đã duyệt hết danh sách. Không tìm thấy giá trị ${val}.`
+    });
+
+    return steps;
+  }
+
+  // Duyệt Danh Sách (Traverse)
+  traverse() {
+    const steps = [];
+    if (!this.head) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: {},
+        pseudocodeLine: 0,
+        log: `Danh sách SLL rỗng.`
+      });
+      return steps;
+    }
+
+    let curr = this.head;
+    let idx = 0;
+    while (curr) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'visited' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `[Traverse] Duyệt qua Node(${curr.value}) tại chỉ số index ${idx}.`
+      });
+      curr = curr.next;
+      idx++;
+    }
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 4,
+      log: `Đã hoàn tất duyệt toàn bộ ${this.size} Node trong SLL.`
+    });
+
+    return steps;
+  }
+
+  // Truy cập Node Đầu tiên (Get First)
+  getFirst() {
+    const steps = [];
+    if (!this.head) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: {},
+        pseudocodeLine: 0,
+        log: `Danh sách rỗng! Get First trả về NULL.`
+      });
+      return steps;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [this.head.id]: 'found' }),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 1,
+      log: `[Get First] Phần tử đầu tiên (HEAD) có giá trị = ${this.head.value}.`
+    });
+
+    return steps;
+  }
+
+  // Truy cập Node Cuối cùng (Get Last)
+  getLast() {
+    const steps = [];
+    if (!this.tail) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: {},
+        pseudocodeLine: 0,
+        log: `Danh sách rỗng! Get Last trả về NULL.`
+      });
+      return steps;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [this.tail.id]: 'found' }),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 1,
+      log: `[Get Last] Phần tử cuối cùng (TAIL) có giá trị = ${this.tail.value}.`
+    });
+
+    return steps;
+  }
+
+  // Truy cập Node theo Index (Get by Index)
+  getByIndex(index) {
+    if (index < 0 || index >= this.size) {
+      return [{
+        ...this.snapshotNodes(),
+        pointers: { head: this.head?.id, tail: this.tail?.id },
+        pseudocodeLine: 0,
+        log: `Chỉ số index ${index} nằm ngoài phạm vi! (Size = ${this.size})`
+      }];
+    }
+
+    const steps = [];
+    let curr = this.head;
+    let i = 0;
+
+    while (i < index) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 2,
+        log: `Duyệt tìm index ${index}: Đang ở Node(${curr.value}) tại index ${i}.`
+      });
+      curr = curr.next;
+      i++;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'found' }),
+      pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+      pseudocodeLine: 3,
+      log: `[Get By Index ${index}] Tìm thấy Node(${curr.value}) tại chỉ số index ${index}!`
+    });
+
+    return steps;
+  }
+
+  // Đảo Ngược Danh Sách (Reverse List)
+  reverse() {
+    const steps = [];
+    if (!this.head || !this.head.next) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: { head: this.head?.id, tail: this.tail?.id },
+        pseudocodeLine: 0,
+        log: `Danh sách có ít hơn 2 Node, giữ nguyên.`
+      });
+      return steps;
+    }
+
+    let prev = null;
+    let curr = this.head;
+    let nextNode = null;
+    this.tail = this.head; // Cũ head trở thành tail mới
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+      pseudocodeLine: 1,
+      log: `Bắt đầu Đảo Ngược Danh Sách (Reverse): Khởi tạo prev = NULL, curr = head.`
+    });
+
+    while (curr) {
+      nextNode = curr.next;
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id, temp: nextNode ? nextNode.id : null },
+        pseudocodeLine: 4,
+        log: `Lưu nextNode = curr.next (${nextNode ? 'Node(' + nextNode.value + ')' : 'NULL'}).`
+      });
+
+      curr.next = prev;
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'found' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 5,
+        log: `Đảo ngược con trỏ: Node(${curr.value}).next -> ${prev ? 'Node(' + prev.value + ')' : 'NULL'}.`
+      });
+
+      prev = curr;
+      curr = nextNode;
+    }
+
+    this.head = prev; // Node cuối cũ thành head mới
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 6,
+      log: `Cập nhật head = prev (${this.head.value}). Hoàn tất Đảo Ngược Danh Sách!`
     });
 
     return steps;

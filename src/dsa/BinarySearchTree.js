@@ -1,7 +1,7 @@
 /**
  * Binary Search Tree (Cây tìm kiếm nhị phân)
  * Triển khai chuẩn Node con trỏ root, left, right.
- * Tính toán tọa độ x, y linh hoạt để Visualizer hiển thị nhánh cây phân nhánh đẹp mắt.
+ * Thêm các thuật toán Find Min, Find Max, Get Height, Count Leaf Nodes và Path Search Animation.
  */
 
 export class BSTNode {
@@ -21,15 +21,13 @@ export class BinarySearchTreeEngine {
     this.size = 0;
   }
 
-  // Tái tính toán vị trí x, y cho từng Node cây (Layout calculation)
-  // Shift depth offset down to 90px so ROOT badge and top branches never get clipped!
   calculatePositions(width = 800, height = 440) {
     if (!this.root) return;
 
     const assignPos = (node, depth = 0, minX = 60, maxX = width - 60) => {
       if (!node) return;
       node.x = (minX + maxX) / 2;
-      node.y = 85 + depth * 75; // Shifting y down to 85px for ample top headroom
+      node.y = 85 + depth * 75;
 
       const mid = node.x;
       assignPos(node.left, depth + 1, minX, mid);
@@ -107,7 +105,7 @@ export class BinarySearchTreeEngine {
         }
         curr = curr.right;
       } else {
-        break; // Duplicate ignored
+        break;
       }
     }
   }
@@ -190,52 +188,187 @@ export class BinarySearchTreeEngine {
     return steps;
   }
 
-  // 2. Tìm kiếm (Search)
+  // 2. Tìm kiếm với Path Traversal Animation (Animation hiển thị toàn bộ đường đi từ Root -> Target)
   search(value) {
     const steps = [];
+    if (!this.root) return steps;
+
     let curr = this.root;
+    const pathNodes = [];
 
     while (curr) {
+      pathNodes.push(curr);
+      const statusMap = {};
+      pathNodes.forEach((n) => (statusMap[n.id] = 'active'));
+
       if (curr.value === value) {
+        statusMap[curr.id] = 'found';
+        const pathStr = pathNodes.map((n) => n.value).join(' -> ');
         steps.push({
-          ...this.snapshotNodes({ [curr.id]: 'found' }),
+          ...this.snapshotNodes(statusMap),
           pointers: { root: this.root.id, current: curr.id },
-          pseudocodeLine: 2,
-          log: `TÌM THẤY! Node(${value}) có mặt trong cây BST.`
+          pseudocodeLine: 4,
+          log: `🎯 TÌM THẤY Node(${value})! Đường đi từ Root: [ ${pathStr} ].`
         });
         return steps;
       }
 
       if (value < curr.value) {
         steps.push({
-          ...this.snapshotNodes({ [curr.id]: 'active' }),
+          ...this.snapshotNodes(statusMap),
           pointers: { root: this.root.id, current: curr.id },
-          pseudocodeLine: 3,
-          log: `${value} < ${curr.value} -> Rẽ sang con TRÁI.`
+          pseudocodeLine: 5,
+          log: `So sánh ${value} < Node(${curr.value}) -> Rẽ sang nhánh TRÁI (left).`
         });
         curr = curr.left;
       } else {
         steps.push({
-          ...this.snapshotNodes({ [curr.id]: 'active' }),
+          ...this.snapshotNodes(statusMap),
           pointers: { root: this.root.id, current: curr.id },
-          pseudocodeLine: 4,
-          log: `${value} > ${curr.value} -> Rẽ sang con PHẢI.`
+          pseudocodeLine: 6,
+          log: `So sánh ${value} > Node(${curr.value}) -> Rẽ sang nhánh PHẢI (right).`
         });
         curr = curr.right;
       }
     }
 
+    const statusMap = {};
+    pathNodes.forEach((n) => (statusMap[n.id] = 'deleting'));
     steps.push({
-      ...this.snapshotNodes(),
+      ...this.snapshotNodes(statusMap),
       pointers: { root: this.root?.id },
-      pseudocodeLine: 5,
-      log: `Đến con trỏ NULL. Không tìm thấy giá trị ${value} trong BST.`
+      pseudocodeLine: 7,
+      log: `Đến con trỏ NULL. Không tìm thấy giá trị ${value} trong BST. Đường đi đã thử: [ ${pathNodes.map((n) => n.value).join(' -> ')} ].`
     });
 
     return steps;
   }
 
-  // 3. Xóa Node (Remove)
+  // 3. Tìm Node Nhỏ Nhất (Find Min - Nhánh trái cùng)
+  findMin() {
+    const steps = [];
+    if (!this.root) return steps;
+
+    let curr = this.root;
+    while (curr.left) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { root: this.root.id, current: curr.id },
+        pseudocodeLine: 2,
+        log: `[Find Min] Đang ở Node(${curr.value}). Rẽ sang nhánh trái curr.left (${curr.left.value})...`
+      });
+      curr = curr.left;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'found' }),
+      pointers: { root: this.root.id, current: curr.id },
+      pseudocodeLine: 3,
+      log: `🏆 [FIND MIN] Node có giá trị nhỏ nhất trong BST là Node(${curr.value}) tại tận cùng bên trái!`
+    });
+
+    return steps;
+  }
+
+  // 4. Tìm Node Lớn Nhất (Find Max - Nhánh phải cùng)
+  findMax() {
+    const steps = [];
+    if (!this.root) return steps;
+
+    let curr = this.root;
+    while (curr.right) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { root: this.root.id, current: curr.id },
+        pseudocodeLine: 2,
+        log: `[Find Max] Đang ở Node(${curr.value}). Rẽ sang nhánh phải curr.right (${curr.right.value})...`
+      });
+      curr = curr.right;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'found' }),
+      pointers: { root: this.root.id, current: curr.id },
+      pseudocodeLine: 3,
+      log: `🏆 [FIND MAX] Node có giá trị lớn nhất trong BST là Node(${curr.value}) tại tận cùng bên phải!`
+    });
+
+    return steps;
+  }
+
+  // 5. Tính Chiều Cao Của Cây (Height of Tree)
+  getHeight() {
+    const steps = [];
+    if (!this.root) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: {},
+        pseudocodeLine: 0,
+        log: `Cây BST rỗng. Height = 0.`
+      });
+      return steps;
+    }
+
+    const calcHeight = (node) => {
+      if (!node) return 0;
+      return 1 + Math.max(calcHeight(node.left), calcHeight(node.right));
+    };
+
+    const treeHeight = calcHeight(this.root);
+    const statusMap = {};
+
+    const highlightAll = (node) => {
+      if (!node) return;
+      statusMap[node.id] = 'visited';
+      highlightAll(node.left);
+      highlightAll(node.right);
+    };
+
+    highlightAll(this.root);
+
+    steps.push({
+      ...this.snapshotNodes(statusMap),
+      pointers: { root: this.root.id },
+      pseudocodeLine: 1,
+      log: `📏 [TREE HEIGHT] Chiều cao của cây BST hiện tại là: ${treeHeight} (tương ứng với ${treeHeight} tầng).`
+    });
+
+    return steps;
+  }
+
+  // 6. Đếm Số Lượng Node Lá (Count Leaf Nodes - Nodes với left == null && right == null)
+  countLeaves() {
+    const steps = [];
+    if (!this.root) return steps;
+
+    const leafNodes = [];
+    const statusMap = {};
+
+    const findLeaves = (node) => {
+      if (!node) return;
+      if (!node.left && !node.right) {
+        leafNodes.push(node);
+        statusMap[node.id] = 'found';
+      } else {
+        statusMap[node.id] = 'visited';
+      }
+      findLeaves(node.left);
+      findLeaves(node.right);
+    };
+
+    findLeaves(this.root);
+
+    steps.push({
+      ...this.snapshotNodes(statusMap),
+      pointers: { root: this.root.id },
+      pseudocodeLine: 2,
+      log: `🍃 [COUNT LEAVES] Tìm thấy tổng cộng ${leafNodes.length} Node Lá (Leaf Nodes): [ ${leafNodes.map((n) => n.value).join(', ')} ].`
+    });
+
+    return steps;
+  }
+
+  // 7. Xóa Node (Remove)
   remove(value) {
     const steps = [];
     if (!this.root) {
@@ -316,7 +449,7 @@ export class BinarySearchTreeEngine {
     return steps;
   }
 
-  // 4. Duyệt Cây
+  // 8. Duyệt Cây
   traverse(type = 'inorder') {
     const steps = [];
     const visitedNodes = [];

@@ -1,6 +1,6 @@
 /**
  * Stack (Ngăn xếp triển khai bằng Linked List - LIFO)
- * Quản lý duy nhất con trỏ TOP
+ * Quản lý con trỏ TOP, dung lượng Capacity và kiểm tra Overflow/Underflow
  */
 
 export class StackNode {
@@ -12,12 +12,13 @@ export class StackNode {
 }
 
 export class StackLLEngine {
-  constructor() {
+  constructor(capacity = 6) {
     this.top = null;
     this.size = 0;
+    this.capacity = capacity;
   }
 
-  snapshotNodes(statusMap = {}, newNode = null) {
+  snapshotNodes(statusMap = {}, newNode = null, alertMessage = null) {
     const list = [];
     let curr = this.top;
     while (curr) {
@@ -33,6 +34,8 @@ export class StackLLEngine {
       nodes: list,
       topId: this.top ? this.top.id : null,
       size: this.size,
+      capacity: this.capacity,
+      alertMessage,
       newNode: newNode ? { id: newNode.id, value: newNode.value, status: 'new' } : null
     };
   }
@@ -40,7 +43,7 @@ export class StackLLEngine {
   setInitialData(values) {
     this.top = null;
     this.size = 0;
-    for (const val of values) {
+    for (const val of values.slice(0, this.capacity)) {
       const node = new StackNode(val);
       node.next = this.top;
       this.top = node;
@@ -51,12 +54,24 @@ export class StackLLEngine {
 
   push(value) {
     const steps = [];
+
+    // Check STACK OVERFLOW
+    if (this.size >= this.capacity) {
+      steps.push({
+        ...this.snapshotNodes({}, null, 'STACK OVERFLOW!'),
+        pointers: { top: this.top?.id },
+        pseudocodeLine: 0,
+        log: `⚠️ STACK OVERFLOW! Ngăn xếp đã đầy dung lượng tối đa (Size = ${this.size} / Capacity = ${this.capacity}). Không thể PUSH!`
+      });
+      return steps;
+    }
+
     const newNode = new StackNode(value);
 
     steps.push({
       ...this.snapshotNodes({}, newNode),
       pointers: { top: this.top?.id, newNode: newNode.id },
-      pseudocodeLine: 0,
+      pseudocodeLine: 1,
       log: `Tạo newNode = Node(${value}) chuẩn bị PUSH vào Stack.`
     });
 
@@ -68,8 +83,9 @@ export class StackLLEngine {
       ],
       topId: this.top?.id,
       size: this.size,
+      capacity: this.capacity,
       pointers: { top: this.top?.id, newNode: newNode.id },
-      pseudocodeLine: 1,
+      pseudocodeLine: 2,
       log: `Trỏ newNode.next -> top hiện tại (${this.top ? 'Node(' + this.top.value + ')' : 'NULL'}).`
     });
 
@@ -79,8 +95,8 @@ export class StackLLEngine {
     steps.push({
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { top: this.top.id },
-      pseudocodeLine: 2,
-      log: `Cập nhật con trỏ top = newNode(${value}). Đã PUSH lên đỉnh Stack!`
+      pseudocodeLine: 3,
+      log: `Cập nhật con trỏ top = newNode(${value}). Đã PUSH lên đỉnh Stack! (Size = ${this.size} / ${this.capacity})`
     });
 
     return steps;
@@ -88,12 +104,14 @@ export class StackLLEngine {
 
   pop() {
     const steps = [];
-    if (!this.top) {
+
+    // Check STACK UNDERFLOW
+    if (!this.top || this.size === 0) {
       steps.push({
-        ...this.snapshotNodes(),
+        ...this.snapshotNodes({}, null, 'STACK UNDERFLOW!'),
         pointers: {},
         pseudocodeLine: 0,
-        log: `StackUnderflow: Ngăn xếp rỗng, không thể POP!`
+        log: `⚠️ STACK UNDERFLOW! Ngăn xếp rỗng (Size = 0), không thể POP!`
       });
       return steps;
     }
@@ -113,7 +131,7 @@ export class StackLLEngine {
       ...this.snapshotNodes(),
       pointers: { top: this.top?.id },
       pseudocodeLine: 2,
-      log: `Di chuyển con trỏ top = top.next. Đã POP thành công phần tử ${temp.value}!`
+      log: `Di chuyển con trỏ top = top.next. Đã POP thành công phần tử ${temp.value}! (Size = ${this.size} / ${this.capacity})`
     });
 
     return steps;
@@ -123,7 +141,7 @@ export class StackLLEngine {
     const steps = [];
     if (!this.top) {
       steps.push({
-        ...this.snapshotNodes(),
+        ...this.snapshotNodes({}, null, 'STACK EMPTY'),
         pointers: {},
         pseudocodeLine: 0,
         log: `Stack rỗng! Peek trả về NULL.`
@@ -136,6 +154,40 @@ export class StackLLEngine {
       pointers: { top: this.top.id },
       pseudocodeLine: 1,
       log: `PEEK: Phần tử ở đỉnh Stack có giá trị = ${this.top.value}.`
+    });
+
+    return steps;
+  }
+
+  isEmpty() {
+    const steps = [];
+    const empty = this.size === 0;
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { top: this.top?.id },
+      pseudocodeLine: 0,
+      log: `Kiểm tra isEmpty(): Stack hiện tại đang ${empty ? 'RỖNG (Size = 0, top = NULL)' : 'KHÔNG RỖNG (Size = ' + this.size + ')'}.`
+    });
+    return steps;
+  }
+
+  clear() {
+    const steps = [];
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { top: this.top?.id },
+      pseudocodeLine: 0,
+      log: `Tiến hành giải phóng toàn bộ phần tử trong Stack...`
+    });
+
+    this.top = null;
+    this.size = 0;
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: {},
+      pseudocodeLine: 0,
+      log: `Đã làm rỗng Stack! (Size = 0, top = NULL).`
     });
 
     return steps;

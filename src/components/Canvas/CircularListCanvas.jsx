@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SVGArrow from './SVGArrow';
-import { Repeat } from 'lucide-react';
+import { Repeat, AlertCircle } from 'lucide-react';
 
 export default function CircularListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
@@ -19,6 +19,12 @@ export default function CircularListCanvas({ snapshot }) {
   return (
     <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-hidden border border-dark-border shadow-inner">
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+
+      {/* Traversal Stop Condition Banner */}
+      <div className="absolute top-3 left-4 z-30 flex items-center space-x-2 bg-amber-950/80 border border-amber-500/60 px-3 py-1.5 rounded-lg shadow text-xs font-mono text-amber-200">
+        <AlertCircle className="w-4 h-4 text-amber-400" />
+        <span>Điều kiện dừng: Traversal stops when pointer returns to HEAD</span>
+      </div>
 
       {/* SVG Layer */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">

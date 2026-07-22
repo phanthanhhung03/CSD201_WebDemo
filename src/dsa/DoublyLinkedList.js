@@ -28,6 +28,8 @@ export class DoublyLinkedListEngine {
         value: curr.value,
         nextId: curr.next ? curr.next.id : null,
         prevId: curr.prev ? curr.prev.id : null,
+        prevVal: curr.prev ? curr.prev.value : 'NULL',
+        nextVal: curr.next ? curr.next.value : 'NULL',
         status: statusMap[curr.id] || 'default'
       });
       curr = curr.next;
@@ -84,7 +86,7 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'new' }, newNode),
       pointers: { head: this.head?.id, tail: this.tail?.id, newNode: newNode.id },
       pseudocodeLine: 2,
-      log: `Nối newNode.next -> head và head.prev -> newNode.`
+      log: `Nối hai chiều: newNode.next -> head và head.prev -> newNode.`
     });
 
     this.head = newNode;
@@ -97,7 +99,7 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 3,
-      log: `Cập nhật head = newNode. Thêm đầu DLL thành công!`
+      log: `Cập nhật head = newNode(${value}). Thêm đầu DLL thành công! (Size = ${this.size})`
     });
 
     return steps;
@@ -144,7 +146,60 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes({ [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 3,
-      log: `Cập nhật con trỏ tail = newNode. Thêm cuối DLL hoàn tất!`
+      log: `Cập nhật con trỏ tail = newNode. Thêm cuối DLL hoàn tất! (Size = ${this.size})`
+    });
+
+    return steps;
+  }
+
+  insertAtIndex(index, value) {
+    if (index <= 0) return this.insertHead(value);
+    if (index >= this.size) return this.insertTail(value);
+
+    const steps = [];
+    const newNode = new DLLNode(value);
+
+    steps.push({
+      ...this.snapshotNodes({}, newNode),
+      pointers: { head: this.head?.id, tail: this.tail?.id, newNode: newNode.id },
+      pseudocodeLine: 0,
+      log: `Tạo newNode = Node(${value}) chuẩn bị chèn DLL tại index = ${index}.`
+    });
+
+    let curr = this.head;
+    let i = 0;
+    while (i < index - 1) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }, newNode),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `Duyệt curr -> Node(${curr.value}) tại index ${i}.`
+      });
+      curr = curr.next;
+      i++;
+    }
+
+    newNode.next = curr.next;
+    newNode.prev = curr;
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'active' }, newNode),
+      pointers: { head: this.head.id, tail: this.tail.id, current: curr.id, newNode: newNode.id },
+      pseudocodeLine: 4,
+      log: `Nối con trỏ 2 chiều cho newNode: next -> Node(${curr.next.value}), prev -> Node(${curr.value}).`
+    });
+
+    if (curr.next) {
+      curr.next.prev = newNode;
+    }
+    curr.next = newNode;
+    this.size++;
+
+    steps.push({
+      ...this.snapshotNodes({ [newNode.id]: 'found' }),
+      pointers: { head: this.head.id, tail: this.tail.id, newNode: newNode.id },
+      pseudocodeLine: 5,
+      log: `Nối các con trỏ lân cận. Đã chèn Node(${value}) tại index ${index}! (Size = ${this.size})`
     });
 
     return steps;
@@ -182,7 +237,7 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes(),
       pointers: { head: this.head?.id, tail: this.tail?.id },
       pseudocodeLine: 2,
-      log: `Cập nhật head = head.next và gán head.prev = NULL. Đã xóa Node đầu!`
+      log: `Cập nhật head = head.next và head.prev = NULL. Đã xóa Node đầu! (Size = ${this.size})`
     });
 
     return steps;
@@ -220,7 +275,55 @@ export class DoublyLinkedListEngine {
       ...this.snapshotNodes(),
       pointers: { head: this.head?.id, tail: this.tail?.id },
       pseudocodeLine: 2,
-      log: `Cập nhật tail = tail.prev và ngắt kết nối tail.next = NULL.`
+      log: `Cập nhật tail = tail.prev và ngắt kết nối tail.next = NULL. (Size = ${this.size})`
+    });
+
+    return steps;
+  }
+
+  deleteAtIndex(index) {
+    if (index < 0 || index >= this.size) {
+      return [{
+        ...this.snapshotNodes(),
+        pointers: { head: this.head?.id, tail: this.tail?.id },
+        pseudocodeLine: 0,
+        log: `Index ${index} không hợp lệ!`
+      }];
+    }
+
+    if (index === 0) return this.deleteHead();
+    if (index === this.size - 1) return this.deleteTail();
+
+    const steps = [];
+    let curr = this.head;
+    let i = 0;
+    while (i < index) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `Duyệt curr -> Node(${curr.value}) tại index ${i}.`
+      });
+      curr = curr.next;
+      i++;
+    }
+
+    steps.push({
+      ...this.snapshotNodes({ [curr.id]: 'deleting' }),
+      pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+      pseudocodeLine: 4,
+      log: `Tìm thấy Node(${curr.value}) tại index ${index} cần xóa.`
+    });
+
+    curr.prev.next = curr.next;
+    curr.next.prev = curr.prev;
+    this.size--;
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 5,
+      log: `Nối lại 2 chiều curr.prev.next = curr.next và curr.next.prev = curr.prev. Đã xóa Node! (Size = ${this.size})`
     });
 
     return steps;
@@ -249,9 +352,111 @@ export class DoublyLinkedListEngine {
 
     steps.push({
       ...this.snapshotNodes(),
-      pointers: { head: this.head?.id, tail: this.tail?.id },
+      pointers: { head: this.head?.id },
       pseudocodeLine: 4,
       log: `Không tìm thấy giá trị ${val} trong DLL.`
+    });
+
+    return steps;
+  }
+
+  // Duyệt Xuôi (Traverse Forward - Head -> Tail)
+  traverseForward() {
+    const steps = [];
+    if (!this.head) return steps;
+
+    let curr = this.head;
+    let idx = 0;
+    while (curr) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'visited' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 2,
+        log: `[Traverse Forward ->] Duyệt xuôi theo con trỏ NEXT: Node(${curr.value}) tại index ${idx}.`
+      });
+      curr = curr.next;
+      idx++;
+    }
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 3,
+      log: `Đã hoàn tất duyệt xuôi từ HEAD -> TAIL trong DLL.`
+    });
+
+    return steps;
+  }
+
+  // Duyệt Ngược (Traverse Backward - Tail -> Head)
+  traverseBackward() {
+    const steps = [];
+    if (!this.tail) return steps;
+
+    let curr = this.tail;
+    let idx = this.size - 1;
+    while (curr) {
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'visited' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 2,
+        log: `[Traverse Backward <-] Duyệt ngược theo con trỏ PREV: Node(${curr.value}) tại index ${idx}.`
+      });
+      curr = curr.prev;
+      idx--;
+    }
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 3,
+      log: `Đã hoàn tất duyệt ngược từ TAIL -> HEAD nhờ con trỏ PREV hai chiều!`
+    });
+
+    return steps;
+  }
+
+  // Đảo Ngược Danh Sách (Reverse List)
+  reverse() {
+    const steps = [];
+    if (!this.head || !this.head.next) {
+      steps.push({
+        ...this.snapshotNodes(),
+        pointers: { head: this.head?.id, tail: this.tail?.id },
+        pseudocodeLine: 0,
+        log: `Danh sách có ít hơn 2 Node, giữ nguyên.`
+      });
+      return steps;
+    }
+
+    let curr = this.head;
+    let temp = null;
+    this.tail = this.head; // Head cũ thành Tail mới
+
+    while (curr) {
+      temp = curr.prev;
+      curr.prev = curr.next;
+      curr.next = temp;
+
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'found' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `Hoán đổi con trỏ 2 chiều cho Node(${curr.value}): prev <-> next.`
+      });
+
+      curr = curr.prev; // vì prev vừa gán = next cũ!
+    }
+
+    if (temp) {
+      this.head = temp.prev;
+    }
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 4,
+      log: `Hoàn tất Đảo Ngược Doubly Linked List! (Head mới = Node(${this.head.value})).`
     });
 
     return steps;

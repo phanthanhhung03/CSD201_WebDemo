@@ -1,6 +1,6 @@
 import React from 'react';
-import { DSA_TYPES, DSA_LABELS } from '../types/dsaTypes';
-import { Network, Layers, Repeat, Server, ArrowRightLeft, GitFork, RefreshCw, Trash2, Sparkles } from 'lucide-react';
+import { DSA_TYPES } from '../types/dsaTypes';
+import { Network, Layers, Repeat, ArrowRightLeft, GitFork, Server, RefreshCw, Trash2, Sparkles, Database } from 'lucide-react';
 
 const iconsMap = {
   [DSA_TYPES.SLL]: Network,
@@ -11,7 +11,7 @@ const iconsMap = {
   [DSA_TYPES.BST]: GitFork,
 };
 
-export default function Header({ activeType, onSelectType, onPreset, onRandom, onClear }) {
+export default function Header({ activeType, onSelectType, onPreset, onRandom, onClear, currentSize = 0, currentCapacity = null }) {
   return (
     <header className="bg-dark-card border-b border-dark-border px-4 py-3 shadow-lg">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
@@ -22,9 +22,16 @@ export default function Header({ activeType, onSelectType, onPreset, onRandom, o
             <Network className="w-6 h-6 text-slate-950 font-bold" />
           </div>
           <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
-              PointerVision DSA
-            </h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-300 bg-clip-text text-transparent">
+                PointerVision DSA
+              </h1>
+              {/* Size Badge */}
+              <span className="flex items-center space-x-1 px-2 py-0.5 bg-cyan-950 border border-cyan-700/80 text-cyan-300 rounded-full text-[11px] font-mono font-bold shadow">
+                <Database className="w-3 h-3 text-cyan-400" />
+                <span>Size: {currentSize} {currentCapacity !== null ? `/ ${currentCapacity}` : ''}</span>
+              </span>
+            </div>
             <p className="text-xs text-slate-400 font-medium">
               Mô Phỏng Trực Quan Con Trỏ & Cấu Trúc Dữ Liệu
             </p>

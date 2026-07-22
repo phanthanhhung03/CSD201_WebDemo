@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SVGArrow from './SVGArrow';
+import { AlertTriangle } from 'lucide-react';
 
 export default function StackCanvas({ snapshot }) {
-  const { nodes = [], topId } = snapshot || {};
+  const { nodes = [], topId, size = 0, capacity = 6, alertMessage } = snapshot || {};
 
   const itemHeight = 50;
   const itemWidth = 170;
@@ -13,6 +14,19 @@ export default function StackCanvas({ snapshot }) {
   return (
     <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-hidden border border-dark-border shadow-inner">
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+
+      {/* Overflow / Underflow Banner */}
+      {alertMessage && (
+        <div className="absolute top-3 left-4 z-30 flex items-center space-x-2 bg-rose-950/90 border border-rose-500/80 px-3.5 py-1.5 rounded-lg shadow-xl text-xs font-mono text-rose-200 glow-rose animate-bounce">
+          <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <span className="font-bold">{alertMessage}</span>
+        </div>
+      )}
+
+      {/* Stack Capacity Indicator */}
+      <div className="absolute top-3 right-4 z-30 bg-dark-panel border border-cyan-500/40 px-3 py-1 rounded-lg text-xs font-mono text-cyan-300 shadow">
+        Capacity: <span className="font-bold">{size} / {capacity}</span>
+      </div>
 
       {/* Stack Container Frame */}
       <div

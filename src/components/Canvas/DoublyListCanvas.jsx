@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SVGArrow from './SVGArrow';
+import { Info } from 'lucide-react';
 
 export default function DoublyListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   const nodeWidth = 125;
   const nodeGap = 90;
@@ -15,9 +17,30 @@ export default function DoublyListCanvas({ snapshot }) {
     y: startY
   });
 
+  const selectedNode = nodes.find((n) => n.id === selectedNodeId);
+
   return (
     <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-hidden border border-dark-border shadow-inner">
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
+
+      {/* Interactive Selection Info Box (Hiển thị Prev / Current / Next khi click chọn 1 Node) */}
+      {selectedNode && (
+        <div className="absolute top-3 left-4 z-30 flex items-center space-x-3 bg-dark-panel/90 border border-cyan-500/60 px-3.5 py-1.5 rounded-lg shadow-xl backdrop-blur text-xs font-mono">
+          <Info className="w-4 h-4 text-cyan-400" />
+          <span className="text-slate-400">Node Đang Chọn:</span>
+          <span className="text-purple-400 font-bold">PREV = {selectedNode.prevVal ?? 'NULL'}</span>
+          <span className="text-slate-500">|</span>
+          <span className="text-cyan-300 font-bold">CURRENT = {selectedNode.value}</span>
+          <span className="text-slate-500">|</span>
+          <span className="text-cyan-400 font-bold">NEXT = {selectedNode.nextVal ?? 'NULL'}</span>
+          <button
+            onClick={() => setSelectedNodeId(null)}
+            className="text-slate-500 hover:text-slate-300 ml-2 text-[10px] uppercase font-bold"
+          >
+            [X]
+          </button>
+        </div>
+      )}
 
       {/* SVG Arrows Layer */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
@@ -122,6 +145,7 @@ export default function DoublyListCanvas({ snapshot }) {
               const coords = getNodeCoords(index);
               const isHead = node.id === headId;
               const isTail = node.id === tailId;
+              const isSelected = node.id === selectedNodeId;
 
               const statusStyles = {
                 default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
@@ -135,6 +159,7 @@ export default function DoublyListCanvas({ snapshot }) {
                 <motion.div
                   key={node.id}
                   layout
+                  onClick={() => setSelectedNodeId(node.id)}
                   initial={{ opacity: 0, y: -20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.5 }}
@@ -146,8 +171,10 @@ export default function DoublyListCanvas({ snapshot }) {
                     width: `${nodeWidth}px`,
                     height: '60px'
                   }}
-                  className={`pointer-events-auto flex items-center justify-between border-2 rounded-xl px-3 shadow-2xl transition-colors ${
-                    statusStyles[node.status] || statusStyles.default
+                  className={`pointer-events-auto cursor-pointer flex items-center justify-between border-2 rounded-xl px-3 shadow-2xl transition-all hover:scale-105 ${
+                    isSelected
+                      ? 'border-yellow-400 bg-yellow-950/80 text-yellow-200 glow-amber ring-2 ring-yellow-400'
+                      : statusStyles[node.status] || statusStyles.default
                   }`}
                 >
                   <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-1">

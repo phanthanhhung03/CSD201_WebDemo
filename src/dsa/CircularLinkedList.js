@@ -93,7 +93,7 @@ export class CircularLinkedListEngine {
         ...this.snapshotNodes({ [newNode.id]: 'found' }),
         pointers: { head: this.head.id, tail: this.tail.id },
         pseudocodeLine: 1,
-        log: `CLL rỗng: Gán head = tail = newNode(${value}) và trỏ newNode.next -> head.`
+        log: `CLL rỗng: Gán head = tail = newNode(${value}) và trỏ newNode.next -> head. (Size = ${this.size})`
       });
       return steps;
     }
@@ -108,7 +108,7 @@ export class CircularLinkedListEngine {
       ...this.snapshotNodes({ [oldTailId]: 'active', [newNode.id]: 'found' }),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 2,
-      log: `Trỏ tail.next = newNode, newNode.next = head, và cập nhật tail = newNode. Vòng lặp được duy trì!`
+      log: `Trỏ tail.next = newNode, newNode.next = head, cập nhật tail = newNode. Vòng lặp duy trì! (Size = ${this.size})`
     });
 
     return steps;
@@ -149,7 +149,7 @@ export class CircularLinkedListEngine {
         ...this.snapshotNodes(),
         pointers: { head: this.head?.id, tail: this.tail?.id },
         pseudocodeLine: 3,
-        log: `Đã xóa Node đầu, cập nhật tail.next trỏ về head mới!`
+        log: `Đã xóa Node đầu, cập nhật tail.next trỏ về head mới! (Size = ${this.size})`
       });
       return steps;
     }
@@ -184,7 +184,7 @@ export class CircularLinkedListEngine {
         ...this.snapshotNodes({ [curr.id]: 'found' }),
         pointers: { head: this.head.id, tail: this.tail.id },
         pseudocodeLine: 4,
-        log: `Cập nhật curr.next = temp.next (tail.next luôn giữ trỏ về head).`
+        log: `Cập nhật curr.next = temp.next (tail.next luôn giữ trỏ về head). (Size = ${this.size})`
       });
     } else {
       steps.push({
@@ -198,6 +198,40 @@ export class CircularLinkedListEngine {
     return steps;
   }
 
+  // Tìm Kiếm (Search)
+  search(val) {
+    const steps = [];
+    if (!this.head) return steps;
+
+    let curr = this.head;
+    let idx = 0;
+    do {
+      const isFound = curr.value === val;
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: isFound ? 'found' : 'active' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: isFound ? 2 : 3,
+        log: isFound
+          ? `TÌM THẤY! Node(${curr.value}) trùng khớp tại vị trí index = ${idx}.`
+          : `So sánh Node(${curr.value}) với ${val} -> Không trùng khớp. Chuyển sang next.`
+      });
+
+      if (isFound) return steps;
+      curr = curr.next;
+      idx++;
+    } while (curr !== this.head);
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 4,
+      log: `Đã duyệt hết 1 vòng khép kín trở lại HEAD. Không tìm thấy giá trị ${val}.`
+    });
+
+    return steps;
+  }
+
+  // Duyệt Vòng Khép Kín (1 Vòng)
   traverse() {
     const steps = [];
     if (!this.head) {
@@ -227,7 +261,41 @@ export class CircularLinkedListEngine {
       ...this.snapshotNodes(),
       pointers: { head: this.head.id, tail: this.tail.id },
       pseudocodeLine: 3,
-      log: `Đã quay lại Node head (${this.head.value}). Duyệt vòng kết thúc!`
+      log: `ĐIỀU KIỆN DỪNG: Con trỏ đã quay trở lại HEAD (${this.head.value}). Hoàn tất duyệt 1 vòng CLL!`
+    });
+
+    return steps;
+  }
+
+  // Duyệt Nhiều Vòng (Ví dụ 2 Vòng) minh họa tính chất Circular
+  traverseMultipleLoops(loopCount = 2) {
+    const steps = [];
+    if (!this.head) return steps;
+
+    let curr = this.head;
+    let totalNodesToVisit = this.size * loopCount;
+    let visitedCount = 0;
+
+    while (visitedCount < totalNodesToVisit) {
+      const currentLoop = Math.floor(visitedCount / this.size) + 1;
+      const stepInLoop = (visitedCount % this.size) + 1;
+
+      steps.push({
+        ...this.snapshotNodes({ [curr.id]: 'visited' }),
+        pointers: { head: this.head.id, tail: this.tail.id, current: curr.id },
+        pseudocodeLine: 3,
+        log: `[VÒNG ${currentLoop}/${loopCount} - Node ${stepInLoop}/${this.size}] Duyệt Node(${curr.value}). Con trỏ liên tục nối vòng!`
+      });
+
+      curr = curr.next;
+      visitedCount++;
+    }
+
+    steps.push({
+      ...this.snapshotNodes(),
+      pointers: { head: this.head.id, tail: this.tail.id },
+      pseudocodeLine: 4,
+      log: `Đã hoàn tất duyệt đúng ${loopCount} vòng liên tục! Điều kiện dừng: Dừng khi con trỏ quay lại HEAD ở vòng cuối.`
     });
 
     return steps;
