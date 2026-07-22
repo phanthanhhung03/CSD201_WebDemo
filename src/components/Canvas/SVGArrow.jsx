@@ -1,8 +1,5 @@
 import React from 'react';
 
-/**
- * Component vẽ mũi tên SVG nối giữa 2 điểm hoặc uốn cong
- */
 export default function SVGArrow({
   startX,
   startY,
@@ -11,23 +8,25 @@ export default function SVGArrow({
   color = '#06b6d4',
   label = '',
   isCurved = false,
-  isDouble = false,
-  dashed = false,
   curveDirection = 'down'
 }) {
-  const markerId = `arrowhead_${color.replace('#', '')}_${dashed ? 'd' : 's'}`;
+  const markerId = `arrowhead_${color.replace('#', '')}`;
 
-  // Tọa độ trung điểm cho nhãn
-  const midX = (startX + endX) / 2;
-  const midY = (startY + endY) / 2;
-
-  let pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
+  let pathD = '';
+  let midX = (startX + endX) / 2;
+  let midY = (startY + endY) / 2;
 
   if (isCurved) {
-    const curveOffset = curveDirection === 'down' ? 70 : -70;
-    const controlY = midY + curveOffset;
+    const offset = curveDirection === 'down' ? 70 : -70;
+    const controlY = startY + offset;
     pathD = `M ${startX} ${startY} Q ${midX} ${controlY} ${endX} ${endY}`;
+    midY = startY + offset / 2;
+  } else {
+    pathD = `M ${startX} ${startY} L ${endX} ${endY}`;
   }
+
+  // Calculate box width dynamically to prevent text clipping
+  const labelWidth = Math.max(36, label ? label.length * 7.5 + 12 : 36);
 
   return (
     <g className="transition-all duration-300">
@@ -46,33 +45,35 @@ export default function SVGArrow({
 
       <path
         d={pathD}
+        fill="none"
         stroke={color}
         strokeWidth="2.5"
-        strokeDasharray={dashed ? '5,5' : 'none'}
-        fill="none"
+        strokeDasharray={isCurved ? '6,4' : 'none'}
         markerEnd={`url(#${markerId})`}
+        className="transition-all duration-300"
       />
 
       {label && (
-        <g transform={`translate(${midX}, ${isCurved ? midY + (curveDirection === 'down' ? 40 : -40) : midY - 12})`}>
+        <g transform={`translate(${midX}, ${midY + (isCurved ? (curveDirection === 'down' ? 25 : -25) : -8)})`}>
           <rect
-            x="-25"
-            y="-10"
-            width="50"
+            x={-labelWidth / 2}
+            y="-9"
+            width={labelWidth}
             height="18"
             rx="4"
-            fill="#0b0f19"
+            fill="#0f172a"
             stroke={color}
-            strokeWidth="1"
+            strokeWidth="1.2"
+            opacity="0.95"
           />
           <text
             x="0"
             y="3"
-            textAnchor="middle"
             fill={color}
             fontSize="10"
             fontWeight="bold"
-            className="font-mono select-none"
+            fontFamily="monospace"
+            textAnchor="middle"
           >
             {label}
           </text>

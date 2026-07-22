@@ -8,19 +8,25 @@ export default function DoublyListCanvas({ snapshot }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   const nodeWidth = 125;
-  const nodeGap = 90;
+  const nodeGap = 115; // Tăng khoảng cách ngang giữa các Node lên 115px cực rộng rãi!
   const startX = 60;
   const startY = 160;
 
-  const getNodeCoords = (index) => ({
-    x: startX + index * (nodeWidth + nodeGap),
-    y: startY
-  });
+  const getNodeCoords = (index, status) => {
+    let yOffset = 0;
+    if (status === 'active' || status === 'found') yOffset = -16;
+    else if (status === 'visited') yOffset = -8;
+
+    return {
+      x: startX + index * (nodeWidth + nodeGap),
+      y: startY + yOffset
+    };
+  };
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   return (
-    <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-hidden border border-dark-border shadow-inner">
+    <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-x-auto overflow-y-hidden border border-dark-border shadow-inner">
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
       {/* Interactive Selection Info Box */}
@@ -43,16 +49,34 @@ export default function DoublyListCanvas({ snapshot }) {
       )}
 
       {/* SVG Arrows Layer */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-        {/* Next Arrows (Top) */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" style={{ minWidth: `${startX + nodes.length * (nodeWidth + nodeGap) + 80}px` }}>
+        {/* Next Arrows (Top Lane) */}
         {nodes.map((node) => {
-          if (!node.nextId) return null;
+          if (node.nextId === undefined) return null; // Link bị ngắt (ẩn hoàn toàn)
           const fromIdx = nodes.findIndex((n) => n.id === node.id);
           const toIdx = nodes.findIndex((n) => n.id === node.nextId);
-          if (fromIdx === -1 || toIdx === -1) return null;
+          if (fromIdx === -1) return null;
 
-          const from = getNodeCoords(fromIdx);
-          const to = getNodeCoords(toIdx);
+          const fromNode = nodes[fromIdx];
+          const from = getNodeCoords(fromIdx, fromNode.status);
+
+          if (node.nextId === null) {
+            return (
+              <SVGArrow
+                key={`null_dll_next_${node.id}`}
+                startX={from.x + nodeWidth - 5}
+                startY={from.y + 18}
+                endX={from.x + nodeWidth + 40}
+                endY={from.y + 18}
+                color="#64748b"
+                label="next"
+              />
+            );
+          }
+
+          if (toIdx === -1) return null;
+          const toNode = nodes[toIdx];
+          const to = getNodeCoords(toIdx, toNode.status);
           const isReversed = toIdx < fromIdx;
 
           return (
@@ -63,21 +87,39 @@ export default function DoublyListCanvas({ snapshot }) {
               endX={isReversed ? to.x + nodeWidth - 5 : to.x + 5}
               endY={to.y + 18}
               color={isReversed ? '#f43f5e' : '#06b6d4'}
-              label={isReversed ? 'next (reversed)' : 'next'}
+              label="next"
             />
           );
         })}
 
-        {/* Prev Arrows (Bottom) */}
+        {/* Prev Arrows (Bottom Lane) */}
         {nodes.map((node) => {
-          if (!node.prevId) return null;
+          if (node.prevId === undefined) return null; // Link bị ngắt (ẩn hoàn toàn)
           const fromIdx = nodes.findIndex((n) => n.id === node.id);
           const toIdx = nodes.findIndex((n) => n.id === node.prevId);
-          if (fromIdx === -1 || toIdx === -1) return null;
+          if (fromIdx === -1) return null;
 
-          const from = getNodeCoords(fromIdx);
-          const to = getNodeCoords(toIdx);
-          const isForward = toIdx > fromIdx;
+          const fromNode = nodes[fromIdx];
+          const from = getNodeCoords(fromIdx, fromNode.status);
+
+          if (node.prevId === null) {
+            return (
+              <SVGArrow
+                key={`null_dll_prev_${node.id}`}
+                startX={from.x + 5}
+                startY={from.y + 42}
+                endX={from.x - 40}
+                endY={from.y + 42}
+                color="#64748b"
+                label="prev"
+              />
+            );
+          }
+
+          if (toIdx === -1) return null;
+          const toNode = nodes[toIdx];
+          const to = getNodeCoords(toIdx, toNode.status);
+          const isForward = toIdx > fromIdx; // Mũi tên prev bị xoay trỏ phải
 
           return (
             <SVGArrow
@@ -87,65 +129,34 @@ export default function DoublyListCanvas({ snapshot }) {
               endX={isForward ? to.x + 5 : to.x + nodeWidth - 5}
               endY={to.y + 42}
               color={isForward ? '#f43f5e' : '#8b5cf6'}
-              label={isForward ? 'prev (reversed)' : 'prev'}
+              label="prev"
             />
           );
         })}
 
-        {/* NULL Pointers */}
-        {nodes.map((node) => {
-          const idx = nodes.findIndex((n) => n.id === node.id);
-          if (idx === -1) return null;
-          const coords = getNodeCoords(idx);
-
-          return (
-            <React.Fragment key={`dll_nulls_${node.id}`}>
-              {node.prevId === null && (
-                <SVGArrow
-                  startX={coords.x + 5}
-                  startY={startY + 42}
-                  endX={coords.x - 35}
-                  endY={startY + 42}
-                  color="#64748b"
-                  label="prev"
-                />
-              )}
-              {node.nextId === null && (
-                <SVGArrow
-                  startX={coords.x + nodeWidth - 5}
-                  startY={startY + 18}
-                  endX={coords.x + nodeWidth + 35}
-                  endY={startY + 18}
-                  color="#64748b"
-                  label="next"
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
-
-        {/* Pointer Badges */}
+        {/* Pointer Badges (Phân tầng Y tách biệt 100% không đè nhãn) */}
         {Object.entries(pointers).map(([ptrName, targetId]) => {
           if (!targetId) return null;
           const idx = nodes.findIndex((n) => n.id === targetId);
           if (idx === -1) return null;
 
-          const coords = getNodeCoords(idx);
+          const node = nodes[idx];
+          const coords = getNodeCoords(idx, node.status);
           const isTop = ptrName === 'head' || ptrName === 'current' || ptrName === 'next' || ptrName === 'newNode';
 
           const topOffsets = {
-            head: -42,
+            head: -38,
             current: -65,
-            next: -88,
-            newNode: -42
+            next: -92,
+            newNode: -38
           };
           const bottomOffsets = {
-            tail: 102,
-            prev: 125,
-            temp: 148
+            tail: 98,
+            prev: 122,
+            temp: 146
           };
 
-          const py = isTop ? coords.y + (topOffsets[ptrName] || -42) : coords.y + (bottomOffsets[ptrName] || 102);
+          const py = isTop ? coords.y + (topOffsets[ptrName] || -38) : coords.y + (bottomOffsets[ptrName] || 98);
           const ey = isTop ? coords.y - 5 : coords.y + 61;
 
           const colorMap = {
@@ -173,7 +184,7 @@ export default function DoublyListCanvas({ snapshot }) {
       </svg>
 
       {/* Nodes Layer */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
+      <div className="absolute inset-0 z-20 pointer-events-none" style={{ minWidth: `${startX + nodes.length * (nodeWidth + nodeGap) + 80}px` }}>
         <AnimatePresence mode="popLayout">
           {nodes.length === 0 ? (
             <motion.div
@@ -185,7 +196,7 @@ export default function DoublyListCanvas({ snapshot }) {
             </motion.div>
           ) : (
             nodes.map((node, index) => {
-              const coords = getNodeCoords(index);
+              const coords = getNodeCoords(index, node.status);
               const isHead = node.id === headId;
               const isTail = node.id === tailId;
               const isSelected = node.id === selectedNodeId;
@@ -196,7 +207,7 @@ export default function DoublyListCanvas({ snapshot }) {
                 active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105 ring-2 ring-amber-400',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105 ring-2 ring-emerald-400',
                 deleting: 'border-rose-500 bg-rose-950 text-rose-200 glow-rose opacity-60 scale-90',
-                visited: 'border-rose-400 bg-rose-950/80 text-rose-200 ring-2 ring-rose-400'
+                visited: 'border-emerald-500/80 bg-emerald-950/60 text-emerald-200 ring-2 ring-emerald-500/60'
               };
 
               return (
@@ -207,7 +218,7 @@ export default function DoublyListCanvas({ snapshot }) {
                   initial={{ opacity: 0, y: -20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 30, scale: 0.5 }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 24 }}
                   style={{
                     position: 'absolute',
                     left: `${coords.x}px`,

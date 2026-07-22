@@ -6,16 +6,14 @@ export default function SinglyListCanvas({ snapshot }) {
   const { nodes = [], pointers = {}, headId, tailId } = snapshot || {};
 
   const nodeWidth = 115;
-  const nodeGap = 80;
-  const startX = 70;
+  const nodeGap = 110; // Tăng khoảng cách ngang giữa các Node lên 110px cực kỳ thoáng đãng!
+  const startX = 60;
   const startY = 160;
 
   const getNodeCoords = (index, status) => {
-    // Tự động nâng nhẹ Node lên (-14px) khi Node đó đã nằm trong phần danh sách đã đảo ngược (visited)
-    // Hoặc nâng (-18px) khi Node đang được xử lý (active/found)
     let yOffset = 0;
-    if (status === 'active' || status === 'found') yOffset = -18;
-    else if (status === 'visited') yOffset = -10;
+    if (status === 'active' || status === 'found') yOffset = -16;
+    else if (status === 'visited') yOffset = -8;
 
     return {
       x: startX + index * (nodeWidth + nodeGap),
@@ -24,15 +22,15 @@ export default function SinglyListCanvas({ snapshot }) {
   };
 
   return (
-    <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-hidden border border-dark-border shadow-inner">
+    <div className="relative w-full h-[380px] bg-dark-bg/60 rounded-xl overflow-x-auto overflow-y-hidden border border-dark-border shadow-inner">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px] opacity-40 pointer-events-none" />
 
       {/* SVG Layer for Pointer Arrows & Auxiliary Pointer Variables */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+      <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" style={{ minWidth: `${startX + nodes.length * (nodeWidth + nodeGap) + 80}px` }}>
         {/* Next pointers between nodes */}
         {nodes.map((node) => {
-          if (node.nextId === undefined) return null; // Ngắt liên kết cũ (ẩn hoàn toàn)
+          if (node.nextId === undefined) return null; // Pointer ngắt (ẩn hoàn toàn)
           const fromIdx = nodes.findIndex((n) => n.id === node.id);
           const toIdx = nodes.findIndex((n) => n.id === node.nextId);
           if (fromIdx === -1) return null;
@@ -41,13 +39,12 @@ export default function SinglyListCanvas({ snapshot }) {
           const from = getNodeCoords(fromIdx, fromNode.status);
 
           if (node.nextId === null) {
-            // Trỏ tới NULL
             return (
               <SVGArrow
                 key={`null_next_${node.id}`}
                 startX={from.x + nodeWidth - 5}
                 startY={from.y + 28}
-                endX={from.x + nodeWidth + 40}
+                endX={from.x + nodeWidth + 45}
                 endY={from.y + 28}
                 color="#64748b"
                 label="next"
@@ -68,12 +65,12 @@ export default function SinglyListCanvas({ snapshot }) {
               endX={isReversed ? to.x + nodeWidth - 5 : to.x + 5}
               endY={to.y + 28}
               color={isReversed ? '#f43f5e' : '#06b6d4'}
-              label={isReversed ? 'next (reversed)' : 'next'}
+              label="next"
             />
           );
         })}
 
-        {/* Pointer Badges (Chỉ vẽ ĐÚNG các con trỏ đang thực sự có mặt trong pointers) */}
+        {/* Pointer Badges (Phân tầng Y tách biệt 100% không lo đè nhãn) */}
         {Object.entries(pointers).map(([ptrName, targetId]) => {
           if (!targetId) return null;
           const idx = nodes.findIndex((n) => n.id === targetId);
@@ -84,18 +81,18 @@ export default function SinglyListCanvas({ snapshot }) {
           const isTop = ptrName === 'head' || ptrName === 'current' || ptrName === 'next' || ptrName === 'newNode';
 
           const topOffsets = {
-            head: -40,
+            head: -38,
             current: -65,
-            next: -90,
-            newNode: -40
+            next: -92,
+            newNode: -38
           };
           const bottomOffsets = {
-            tail: 100,
+            tail: 98,
             prev: 122,
-            temp: 144
+            temp: 146
           };
 
-          const py = isTop ? coords.y + (topOffsets[ptrName] || -40) : coords.y + (bottomOffsets[ptrName] || 100);
+          const py = isTop ? coords.y + (topOffsets[ptrName] || -38) : coords.y + (bottomOffsets[ptrName] || 98);
           const ey = isTop ? coords.y - 5 : coords.y + 61;
 
           const colorMap = {
@@ -123,7 +120,7 @@ export default function SinglyListCanvas({ snapshot }) {
       </svg>
 
       {/* Nodes Layer */}
-      <div className="absolute inset-0 z-20 pointer-events-none">
+      <div className="absolute inset-0 z-20 pointer-events-none" style={{ minWidth: `${startX + nodes.length * (nodeWidth + nodeGap) + 80}px` }}>
         <AnimatePresence mode="popLayout">
           {nodes.length === 0 ? (
             <motion.div
@@ -142,7 +139,7 @@ export default function SinglyListCanvas({ snapshot }) {
               const statusStyles = {
                 default: 'border-cyan-500/60 bg-dark-card text-cyan-200',
                 new: 'border-purple-400 bg-purple-950 text-purple-200 glow-purple ring-2 ring-purple-400',
-                active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105 ring-2 ring-amber-400 -translate-y-2',
+                active: 'border-amber-400 bg-amber-950 text-amber-200 glow-amber scale-105 ring-2 ring-amber-400',
                 found: 'border-emerald-400 bg-emerald-950 text-emerald-200 glow-emerald scale-105 ring-2 ring-emerald-400',
                 deleting: 'border-rose-500 bg-rose-950 text-rose-200 glow-rose opacity-60 scale-90',
                 visited: 'border-emerald-500/80 bg-emerald-950/60 text-emerald-200 ring-2 ring-emerald-500/60'
@@ -196,7 +193,7 @@ export default function SinglyListCanvas({ snapshot }) {
             <motion.div
               style={{
                 position: 'absolute',
-                left: `${getNodeCoords(nodes.length - 1, 'default').x + nodeWidth + 45}px`,
+                left: `${getNodeCoords(nodes.length - 1, 'default').x + nodeWidth + 50}px`,
                 top: `${startY + 12}px`
               }}
               className="px-3.5 py-1.5 bg-slate-900 border border-slate-700 text-slate-400 font-mono text-sm rounded-lg shadow-lg font-bold"
